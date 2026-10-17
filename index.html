@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shadowing">
+<meta name="theme-color" content="#2f6fde">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Shadowing Coach</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--line:#e3e1da;--accent:#2f6fde;--accent-ink:#fff;--ja:#55555c;--hl:#fff1c2;--ok:#23955a;--danger:#d14343}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1f1f23;--ink:#f2f2f4;--sub:#9a9aa2;--line:#2f2f35;--accent:#5b8ff0;--accent-ink:#fff;--ja:#b4b4bc;--hl:#3d3620;--ok:#4cc27e;--danger:#ef6b6b}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.5}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.block{display:block;width:100%}
+.big{padding:16px;font-size:18px}
+.big small{display:block;font-size:12px;font-weight:400;opacity:.85;margin-top:4px}
+.ghost{background:transparent}
+.danger{color:var(--danger)}
+.bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar h1{flex:1;margin:0;font-size:17px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .side{min-width:64px;display:flex}
+.bar .side.r{justify-content:flex-end}
+.icon{border:none;background:none;padding:8px 10px;min-width:44px;font-size:17px;color:var(--accent)}
+.cnt{font-size:13px;color:var(--sub);padding-right:8px}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom) + 40px);display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:15px}
+h2 small{font-weight:400;color:var(--sub)}
+.lessons{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.lesson{width:100%;text-align:left;padding:14px 16px}
+.lt{font-weight:600}
+.lm{font-size:13px;color:var(--sub)}
+.empty,.note{color:var(--sub);font-size:14px;text-align:center}
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.step{text-align:left;display:flex;flex-direction:column;gap:2px;padding:12px}
+.step b{font-size:15px}
+.step span{font-size:12px;color:var(--sub);line-height:1.4}
+.listhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px}
+.toggles{display:flex;gap:12px;font-size:13px;color:var(--sub)}
+.toggles label{display:flex;align-items:center;gap:4px}
+.sents{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.sents li{display:flex;gap:6px}
+.sent{flex:1;text-align:left;display:flex;flex-direction:column;gap:2px;transition:background .2s}
+.sent.playing{background:var(--hl)}
+.slow{flex:none;width:48px;padding:0;font-size:18px}
+.spk{font-size:12px;color:var(--accent);font-weight:600}
+.ja{color:var(--ja);font-size:14px}
+.hid{filter:blur(7px);user-select:none;-webkit-user-select:none}
+/* editor & settings */
+input,textarea,select{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input[type=range]{padding:0;border:none;background:none}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+textarea{resize:vertical;line-height:1.45}
+.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--sub)}
+.f.inline{flex-direction:row;align-items:center;justify-content:space-between;color:var(--ink);font-size:15px}
+.f.inline input{width:76px;text-align:center}
+.chk{display:flex;gap:10px;align-items:center;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px}
+.row button{flex:none}
+.hint{margin:0;font-size:12px;color:var(--sub);line-height:1.5}
+.erow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.erow-h{display:flex;gap:6px;align-items:center}
+.erow-h span{width:26px;color:var(--sub);font-size:13px}
+.erow-h input{flex:1;padding:6px 10px}
+.sm{padding:6px 10px;font-size:13px}
+.lan{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--ink);word-break:break-all}
+/* player */
+.player{min-height:100dvh;display:flex;flex-direction:column}
+.pills{display:flex;gap:4px;padding:10px 16px;overflow-x:auto;max-width:720px;width:100%;margin:0 auto}
+.pill{font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--sub);white-space:nowrap}
+.pill.done{opacity:.45}
+.pill.cur{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.stage{flex:1;max-width:720px;width:100%;margin:0 auto;padding:6px 16px;display:flex;flex-direction:column;gap:10px}
+.stepname{font-size:22px;font-weight:700}
+.stepname small{font-size:14px;font-weight:400;color:var(--sub)}
+.stepdesc{color:var(--sub);font-size:14px;margin-top:-6px}
+.sentcard{text-align:left;padding:20px;min-height:190px}
+.sentcard .en{font-size:22px;line-height:1.45;font-weight:500}
+.sentcard .ja{font-size:16px}
+.num{font-size:12px;color:var(--sub)}
+.peekhint{font-size:11px;color:var(--sub)}
+.turn{height:26px;text-align:center;font-weight:700;color:var(--ok)}
+.meter{height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+#bar{height:100%;width:0;background:var(--ok)}
+.controls{display:flex;justify-content:center;align-items:center;gap:12px;padding:16px}
+.controls button{width:54px;height:54px;border-radius:50%;padding:0;font-size:19px}
+.controls .primary{width:72px;height:72px;font-size:26px}
+.nextstep{max-width:688px;width:calc(100% - 32px);margin:0 auto calc(env(safe-area-inset-bottom) + 16px)}
+.done{align-items:center;justify-content:center;text-align:center;gap:14px}
+.done .em{font-size:56px}
+.done p{color:var(--sub);margin:0}
+.audiocard{text-align:left;display:flex;flex-direction:column;gap:2px;padding:12px 14px}
+.audiocard span{font-size:12px;color:var(--sub)}
+.filebtn.block{display:block}
+.center{text-align:center}
+.steps-list{margin:0;padding-left:20px}
+.filebtn{display:inline-block;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;background:var(--card);color:var(--accent);font-weight:600;font-size:15px}
+.wav{width:100%;height:48px;display:block;background:var(--bg);border-radius:8px;cursor:pointer;touch-action:manipulation}
+.wav.zoom{height:96px}
+.transport{display:flex;justify-content:center;gap:8px;align-items:center}
+.transport button{min-width:52px;padding:10px 8px}
+.transport .primary{min-width:64px;font-size:18px}
+.time{text-align:center;font-variant-numeric:tabular-nums;color:var(--sub);font-size:14px}
+.row.wrap2{flex-wrap:wrap}
+.row.wrap2 button{flex:1 1 200px}
+.row button small,.card .big small{display:block;font-size:12px;font-weight:400;opacity:.8}
+.srow{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.srow-t{display:flex;gap:8px;font-size:14px}
+.srow-t .n{color:var(--sub);width:22px;flex:none}
+.srow-c{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--sub)}
+.srow-c .tm{font-variant-numeric:tabular-nums;min-width:112px;color:var(--ink)}
+.srow.none .tm{color:var(--danger)}
+.srow-c .lbl{margin-left:6px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status"></div>
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const today = () => new Date().toLocaleDateString('sv-SE');
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+// ================================================================ settings
+const DEFAULTS = {
+  rate: 0.95, audioRate: 1.0, enVoice: '', enVoice2: '', jaVoice: '',
+  repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true,
+  course: { listen: 1, read: 1, overlap: 1, shadow: 2, repeat: 1, jaen: 1 },
+};
+let S = loadSettings();
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sc.settings') || '{}');
+    return { ...DEFAULTS, ...s, course: { ...DEFAULTS.course, ...(s.course || {}) } };
+  } catch { return structuredClone(DEFAULTS); }
+}
+function saveSettings() { try { localStorage.setItem('sc.settings', JSON.stringify(S)); } catch {} }
+
+// ================================================================ storage (この端末の IndexedDB に保存)
+const idb = {
+  db: null,
+  open() {
+    return this.db || (this.db = new Promise((res, rej) => {
+      const r = indexedDB.open('shadowing-coach', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    }));
+  },
+  async tx(mode, fn) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('kv', mode), req = fn(t.objectStore('kv'));
+      t.oncomplete = () => res(req?.result);
+      t.onerror = t.onabort = () => rej(t.error);
+    });
+  },
+  get(k) { return this.tx('readonly', s => s.get(k)); },
+  set(k, v) { return this.tx('readwrite', s => s.put(v, k)); },
+  del(k) { return this.tx('readwrite', s => s.delete(k)); },
+};
+
+const SAMPLE = {
+  id: 'sample', title: 'サンプル: カフェで', date: '', url: '', createdAt: 0, history: [],
+  sentences: [
+    { speaker: 'Emma', en: "Hi Ken! I didn't expect to see you here.", ja: 'ケン、こんにちは！ここで会うとは思わなかった。' },
+    { speaker: 'Ken', en: 'Hey, Emma. I come here every morning before work.', ja: 'やあ、エマ。仕事の前に毎朝ここに来るんだ。' },
+    { speaker: 'Emma', en: 'Really? What do you usually get?', ja: '本当？いつも何を頼むの？' },
+    { speaker: 'Ken', en: 'A large latte. It keeps me going until lunch.', ja: 'ラテのLサイズ。それでお昼までもつんだ。' },
+    { speaker: 'Emma', en: "Maybe I should try that. I've been so sleepy lately.", ja: '私も試してみようかな。最近すごく眠くて。' },
+    { speaker: 'Ken', en: "Let me get you one. It's my treat.", ja: '1杯買ってあげるよ。僕のおごり。' },
+  ],
+};
+
+const Store = {
+  lessons: [], server: false, ok: true,
+  async load() {
+    // Mac の server.py から開いているときだけ、URL取得が使える
+    try { const r = await fetch('api/info', { cache: 'no-store' }); this.server = r.ok && (r.headers.get('content-type') || '').includes('json'); } catch {}
+    try {
+      const saved = await idb.get('lessons');
+      if (saved) this.lessons = saved;
+      else this.lessons = (this.server && await migrateFromServer()) || [structuredClone(SAMPLE)];
+      navigator.storage?.persist?.().catch(() => {});
+    } catch (e) {
+      console.error(e); this.ok = false; this.lessons = [structuredClone(SAMPLE)];
+    }
+  },
+  async save() {
+    try { await idb.set('lessons', this.lessons); }
+    catch (e) { console.error(e); toast('この端末に保存できませんでした(プライベートブラウズでは保存できません)'); }
+  },
+  get(id) { return this.lessons.find(l => l.id === id); },
+};
+
+// 以前の版(Mac のサーバーに保存)のデータを、この端末に移す
+async function migrateFromServer() {
+  try {
+    const lessons = await (await fetch('api/lessons')).json();
+    if (!Array.isArray(lessons) || !lessons.length) return null;
+    for (const L of lessons) {
+      if (!L.audio?.file) continue;
+      const blob = await (await fetch(`api/audio/${L.audio.file}`)).blob();
+      const env = await fetch(`api/audio/${L.id}.env.json`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+      await idb.set('audio:' + L.id, { blob, name: L.audio.name || L.audio.file });
+      if (env) await idb.set('env:' + L.id, env);
+      L.audio = { name: L.audio.name || L.audio.file, duration: L.audio.duration, v: Date.now() };
+    }
+    await idb.set('lessons', lessons);
+    return lessons;
+  } catch { return null; }
+}
+
+// ================================================================ script parser
+// 英文の行と日本語の行を見分けて、英文 → 訳 の組にする
+const JA_RE = /[぀-ヿ㐀-鿿ｦ-ﾟ]/;
+const SPEAKER_RE = /^([A-Z][A-Za-z.'\- ]{0,18}?)\s*[:：]\s*(.+)$/;
+const HEADING_RE = /^[【\[［(（〈《]?\s*(日本語訳|和訳|全訳|対訳|訳|英文|本文|スクリプト|ダイアログ|ダイアローグ|スキット|会話|会話文|今日の表現|ポイント|解説|語句|単語|Dialogue|Script|Translation)\s*[】\]］)）〉》]?\s*[:：]?$/i;
+const PREFIX_RE = /^(?:[■□●○◆◇★☆▶▷►・*>\-–—]+\s*|\(?\d{1,3}[.)）]\s+)/;
+
+function classify(line) {
+  if (JA_RE.test(line)) return 'ja';
+  const compact = line.replace(/\s/g, '');
+  const letters = (line.match(/[A-Za-z]/g) || []).length;
+  if (letters >= 2 && letters / compact.length >= 0.6) {
+    if (line.split(/\s+/).length >= 2 || /[.!?]$/.test(line)) return 'en';
+  }
+  return 'other';
+}
+
+// 「DIALOGUE」などの見出しがあれば、その節(次の見出しまで)だけを使う
+const SECTION_START = /^(DIALOGUE|DIALOG|Dialogue|Dialog|ダイアログ|ダイアローグ|スキット|Skit)(\s|$|[:：])/;
+const DECOR_RE = /[☆★■□●○◆◇]/g;
+const isHeadLine = l => (/^[☆★■◆●【\[［]/.test(l) && l.length <= 40) || /^[A-Z][A-Z0-9 &'’\-]{3,}$/.test(l);
+// 「Dialogue」の節が複数あるとき(英文だけの節と訳付きの節など)は、訳が多く付く節を選ぶ
+function dialogueSection(rawLines) {
+  let best = null, bestScore = 0;
+  rawLines.forEach((l, i) => {
+    if (!isHeadLine(l) || !SECTION_START.test(l.replace(DECOR_RE, '').trim())) return;
+    let j = i + 1;
+    while (j < rawLines.length && !isHeadLine(rawLines[j])) j++;
+    const sec = rawLines.slice(i + 1, j), items = parseLines(sec);
+    const score = items.length + 2 * items.filter(x => x.ja).length;
+    if (items.length && score > bestScore) { best = sec; best.start = i + 1; best.end = j; bestScore = score; }
+  });
+  return best;
+}
+const splitRaw = text => String(text).split(/\r?\n/).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+const hasDialogue = text => !!dialogueSection(splitRaw(text));
+
+// 取り込み用ブックマークレットが付ける見出し
+const CLIP_HEAD = '【Shadowing取り込み】';
+// まとめて取得したときは記事ごとに「=====」の行で区切られている
+function parseClips(text) {
+  text = String(text || '');
+  if (!text.startsWith(CLIP_HEAD)) return [{ title: '', url: '', raw: text }];
+  return text.slice(text.indexOf('\n') + 1).split('\n=====\n').map(chunk => {
+    const [head, ...rest] = chunk.split('\n---\n');
+    const get = k => (head.match(new RegExp('^' + k + ': (.*)$', 'm')) || [])[1] || '';
+    return { title: get('タイトル').split(/[｜|]/)[0].trim(), url: get('URL'), raw: rest.join('\n---\n') };
+  });
+}
+const parseClip = text => parseClips(text)[0];
+const dateFromTitle = t => { const m = String(t).match(/(\d{4})年(\d{1,2})月(\d{1,2})日/); return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : ''; };
+
+function parseScript(text) {
+  const raw = splitRaw(text);
+  const sec = dialogueSection(raw);
+  const items = parseLines(sec || raw);
+  if (sec) fillTranslations(items, raw, sec.start, sec.end);
+  return items;
+}
+
+// 訳のない会話文について、ページ内の別の場所(WORDS AND PHRASES など)にある
+// 「英文 → 次の行に日本語訳」の組を探して付ける。1つの発言が複数の文に分けて訳されていてもつなげる。
+// 書き起こしの揺れ(there is / there's など)があっても合うよう、単語単位であいまいに照合する
+const enWords = s => s.toLowerCase().replace(/[’‘`]/g, "'").replace(/[^a-z0-9' ]/g, ' ').split(/\s+/).filter(Boolean);
+function lcsLen(a, b) {
+  const dp = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = 0;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1] ? prev + 1 : Math.max(dp[j], dp[j - 1]);
+      prev = tmp;
+    }
+  }
+  return dp[b.length];
+}
+function fillTranslations(items, raw, start, end) {
+  if (items.every(x => x.ja)) return;
+  const pairs = []; // 会話の節より後ろにあるものを優先。会話の節そのものは見ない
+  const seen = new Set();
+  for (const i of [...raw.keys()].slice(end).concat([...raw.keys()].slice(0, start))) {
+    const en = raw[i].replace(PREFIX_RE, ''), ja = raw[i + 1];
+    if (!ja || classify(en) !== 'en' || classify(ja) !== 'ja' || /^[(（]?NOTE/i.test(ja)) continue;
+    const w = enWords(en.replace(SPEAKER_RE, '$2')), key = w.join(' ');
+    if (w.length >= 2 && !seen.has(key)) { seen.add(key); pairs.push({ w, ja: ja.replace(PREFIX_RE, '') }); }
+  }
+  for (const it of items) {
+    if (it.ja) continue;
+    const T = enWords(it.en), n = T.length, found = [];
+    for (const c of pairs) {
+      const m = c.w.length;
+      if (m < 4 && m < n) continue; // 短い語句は語注のことが多いので、発言全体と一致するときだけ使う
+      let best = null;
+      for (let p = 0; p < n; p++) {
+        for (let w = Math.max(1, m - 2); w <= m + 2 && p + w <= n; w++) {
+          const sc = lcsLen(c.w, T.slice(p, p + w));
+          if (sc >= 0.8 * m && sc >= 0.8 * w && (!best || sc > best.sc || (sc === best.sc && Math.abs(w - m) < Math.abs(best.w - m)))) best = { p, w, sc };
+        }
+      }
+      if (best) found.push({ p: best.p, e: best.p + best.w, ja: c.ja });
+    }
+    found.sort((a, b) => a.p - b.p || b.e - a.e);
+    const parts = [];
+    let pos = 0, covered = 0;
+    for (const f of found) if (f.p >= pos) { parts.push(f.ja); covered += f.e - f.p; pos = f.e; }
+    if (n && covered >= n * 0.8) it.ja = parts.join('');
+  }
+}
+
+function parseLines(rawLines) {
+  const lines = rawLines.filter(l => !/^\*\*/.test(l)) // **語句 のような語注は除く
+    .map(l => l.replace(PREFIX_RE, '')).filter(l => l && !HEADING_RE.test(l));
+  // 話者ラベル付きの会話なら、ラベルのない英文は「直前の発言の続き」以外は語注とみなして除く
+  const labeled = lines.filter(l => classify(l) === 'en' && SPEAKER_RE.test(l)).length >= 2;
+  const runs = [];
+  let prevEn = false;
+  for (const line of lines) {
+    const t = classify(line);
+    if (t === 'other') continue;
+    if (t === 'en' && labeled && !SPEAKER_RE.test(line) && !(prevEn && line.split(/\s+/).length >= 4)) continue;
+    prevEn = t === 'en';
+    const last = runs.at(-1);
+    if (last && last.t === t) last.lines.push(line); else runs.push({ t, lines: [line] });
+  }
+  const items = [];
+  runs.forEach((r, k) => {
+    if (r.t !== 'en') return;
+    const start = items.length;
+    for (const line of r.lines) {
+      const m = line.match(SPEAKER_RE);
+      items.push(m ? { speaker: m[1].trim(), en: m[2].trim(), ja: '' } : { speaker: '', en: line, ja: '' });
+    }
+    // 英→訳 が1行ずつ交互のときか、英文のまとまりのあとに同じくらいの数の訳が続くときだけ組にする
+    // (図のキャプションや解説の1行を訳と取り違えないように)
+    const next = runs[k + 1], n = r.lines.length;
+    if (!next || next.t !== 'ja' || !(n === 1 || next.lines.length >= Math.ceil(n * 0.6))) return;
+    for (let q = 0; q < Math.min(n, next.lines.length); q++) items[start + q].ja = next.lines[q].replace(/^[^\s:：「『(（]{1,8}[:：]\s*/, '');
+  });
+  return items;
+}
+
+// ================================================================ speech
+let voices = [];
+const loadVoices = () => { voices = speechSynthesis.getVoices(); };
+loadVoices();
+speechSynthesis.addEventListener?.('voiceschanged', () => { loadVoices(); if (view.name === 'settings') render(); });
+
+const NOVELTY = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Grandma|Grandpa|Rocko|Eddy|Flo\b|Reed|Sandy|Shelley|Junior|Ralph|Fred|Kathy/i;
+// 日本語環境の Mac では英語の効果音系ボイスが「ささやき声」「ベル」など日本語名になる
+const isEn = v => /^en[-_]/i.test(v.lang) && !JA_RE.test(v.name);
+const isJa = v => /^ja/i.test(v.lang);
+const byName = n => (n ? voices.find(v => v.name === n) : null);
+function best(filter, exclude) {
+  const score = v => (/premium|enhanced|neural|natural|siri/i.test(v.name) ? 4 : 0) + (/^en[-_]US/i.test(v.lang) ? 2 : 0)
+    + (/Samantha|Google US|Aria|Jenny|Ava|Zoe|Kyoko|Google 日本語|Nanami/i.test(v.name) ? 1 : 0);
+  return voices.filter(v => filter(v) && !NOVELTY.test(v.name) && v.name !== exclude).sort((a, b) => score(b) - score(a))[0] || null;
+}
+const enPrimary = () => byName(S.enVoice) || best(isEn);
+const enSecondary = () => { const p = enPrimary(); return byName(S.enVoice2) || best(isEn, p?.name) || p; };
+const jaVoice = () => byName(S.jaVoice) || best(isJa);
+function voiceFor(L, s) {
+  const speakers = [...new Set(L.sentences.map(x => x.speaker).filter(Boolean))];
+  return speakers.indexOf(s.speaker) % 2 === 1 ? enSecondary() : enPrimary();
+}
+
+let finishSpeech = null;
+let keepUtter = null; // Safari で読み上げ途中に GC されないよう保持
+function speakOnce(text, voice, lang, rate) {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.lang = (voice?.lang || lang).replace('_', '-');
+    u.rate = rate;
+    const t0 = performance.now();
+    let done = false;
+    const fin = ok => { if (done) return; done = true; clearTimeout(guard); if (finishSpeech === fin) finishSpeech = null; resolve({ ok, ms: performance.now() - t0 }); };
+    const guard = setTimeout(() => fin(true), 5000 + text.length * 180 / rate); // onend が来ない環境の保険
+    u.onend = () => fin(true);
+    u.onerror = () => fin(false);
+    finishSpeech = fin; keepUtter = u;
+    speechSynthesis.resume();
+    speechSynthesis.speak(u);
+  });
+}
+
+// ---------------------------------------------------------------- 番組音声(MP3 など)
+const audioEl = new Audio();
+audioEl.preload = 'auto';
+audioEl.preservesPitch = audioEl.webkitPreservesPitch = true;
+let primeP = Promise.resolve();
+
+const hasAudio = L => !!L?.audio && !L.audio.missing;
+const segOf = (L, s) => (hasAudio(L) && s.seg && s.seg.e > s.seg.s ? s.seg : null);
+
+// 音声ファイルは IndexedDB に Blob で保存し、再生時は blob: URL を使う
+const audioUrls = new Map();
+async function loadAudioUrl(L) {
+  if (!hasAudio(L) || audioUrls.has(L.id)) return audioUrls.get(L?.id);
+  const rec = await idb.get('audio:' + L.id).catch(() => null);
+  if (!rec) { L.audio.missing = true; return null; }
+  const u = URL.createObjectURL(rec.blob);
+  audioUrls.set(L.id, u);
+  return u;
+}
+function forgetAudioUrl(id) { const u = audioUrls.get(id); if (u) { URL.revokeObjectURL(u); audioUrls.delete(id); } }
+function prepareAudio(L) { // タップ操作の中から同期的に呼ぶ(iOS の再生制限のため)
+  const u = hasAudio(L) && audioUrls.get(L.id);
+  if (u && audioEl.dataset.u !== u) { audioEl.src = u; audioEl.dataset.u = u; audioEl.load(); }
+  return !!u;
+}
+
+// 10ms ごとの音量(0〜100)を計算する。文の区切り(無音)を見つけるのに使う
+async function computeEnvelope(arrayBuffer) {
+  const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  let ctx;
+  try { ctx = new Ctx(1, 1, 8000); } catch { ctx = new Ctx(1, 1, 44100); } // 低いサンプルレートで展開してメモリを節約
+  const ab = await new Promise((res, rej) => { const p = ctx.decodeAudioData(arrayBuffer, res, rej); p?.catch?.(rej); });
+  const ch = ab.getChannelData(0), hop = Math.round(ab.sampleRate / 100), n = Math.floor(ch.length / hop);
+  const data = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let k = i * hop, e = k + hop; k < e; k++) sum += ch[k] * ch[k];
+    const db = 10 * Math.log10(sum / hop + 1e-10);
+    data[i] = Math.max(0, Math.min(100, Math.round((db + 70) * 100 / 70)));
+  }
+  return { step: hop / ab.sampleRate, duration: ab.duration, data };
+}
+
+// 音声ファイルをレッスンに取り付ける。長さが前と同じなら区切りはそのまま使う
+async function attachAudio(L, file) {
+  const env = await computeEnvelope(await file.arrayBuffer());
+  await idb.set('audio:' + L.id, { blob: file, name: file.name });
+  await idb.set('env:' + L.id, env);
+  forgetAudioUrl(L.id);
+  const same = L.audio?.duration && Math.abs(L.audio.duration - env.duration) < 0.3;
+  if (!same) L.sentences.forEach(s => delete s.seg);
+  L.audio = { name: file.name, duration: env.duration, v: Date.now() };
+  return env;
+}
+async function removeAudio(L) {
+  forgetAudioUrl(L.id);
+  await idb.del('audio:' + L.id).catch(() => {});
+  await idb.del('env:' + L.id).catch(() => {});
+  delete L.audio; L.sentences.forEach(s => delete s.seg);
+}
+
+// まだ区切っていないレッスンを、音声ファイル全体を会話として自動で区切る
+async function autoSplitIfNeeded(L) {
+  if (!hasAudio(L) || !L.sentences.length || L.sentences.some(s => s.seg)) return false;
+  const env = await idb.get('env:' + L.id).catch(() => null);
+  if (!env) return false;
+  const segs = computeSplit(env, L.sentences, 0, env.duration);
+  if (typeof segs === 'string') return false;
+  L.sentences.forEach((s, i) => { s.seg = segs[i]; });
+  return true;
+}
+
+// 区間 [seg.s, seg.e] (秒) を再生する。speakOnce と同じく finishSpeech で中断できる
+function playSeg(seg, rate) {
+  return new Promise(resolve => {
+    let done = false, timer = null, guard = null;
+    const t0 = performance.now();
+    const fin = ok => {
+      if (done) return; done = true;
+      clearInterval(timer); clearTimeout(guard); audioEl.removeEventListener('seeked', go);
+      audioEl.pause();
+      if (finishSpeech === fin) finishSpeech = null;
+      resolve({ ok, ms: performance.now() - t0 });
+    };
+    function go() {
+      audioEl.removeEventListener('seeked', go);
+      if (done || timer) return;
+      audioEl.playbackRate = rate;
+      audioEl.play().catch(() => fin(false));
+      timer = setInterval(() => { if (audioEl.currentTime >= seg.e || audioEl.ended) fin(true); }, 15);
+      guard = setTimeout(() => fin(true), (seg.e - seg.s) / rate * 1000 + 4000);
+    }
+    finishSpeech = fin;
+    primeP.then(() => {
+      if (done) return;
+      audioEl.addEventListener('seeked', go);
+      setTimeout(go, 1500); // seeked が来ない環境の保険
+      audioEl.currentTime = seg.s;
+    });
+  });
+}
+
+let actx = null, unlocked = false;
+function unlock() { // iOS: 最初の音声はタップ操作の中で鳴らす必要がある
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume?.(); } catch {}
+  if (!unlocked) { try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch {} unlocked = true; }
+  if (audioEl.src && audioEl.paused) {
+    audioEl.muted = true;
+    primeP = audioEl.play().then(() => audioEl.pause()).catch(() => {}).finally(() => { audioEl.muted = false; });
+  }
+}
+function beep() {
+  if (!S.beep || !actx) return;
+  try {
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.17);
+  } catch {}
+}
+let wakeLock = null;
+async function keepAwake(on) {
+  try { if (on) wakeLock = await navigator.wakeLock?.request('screen'); else { await wakeLock?.release(); wakeLock = null; } } catch {}
+}
+
+// ================================================================ training engine
+class Abort { constructor(kind) { this.kind = kind; } }
+let R = null; // 実行中のトレーニング
+
+function interrupt(kind) {
+  if (!R || R.done) return;
+  R.pending = kind; R.paused = false;
+  speechSynthesis.cancel(); finishSpeech?.(false);
+}
+function togglePause() {
+  if (!R || R.done) return;
+  R.paused = !R.paused;
+  if (R.paused) { speechSynthesis.cancel(); finishSpeech?.(false); }
+  updatePlayer();
+}
+function takePending() { if (R.pending) { const k = R.pending; R.pending = null; throw new Abort(k); } }
+async function gate() { while (R.paused && !R.pending) await sleep(100); takePending(); }
+
+async function play(start) {
+  for (;;) {
+    await gate();
+    await sleep(30);
+    const r = await start();
+    takePending();
+    if (R.paused) continue; // 一時停止された文は再開時に最初から
+    return r.ms;
+  }
+}
+const say = (text, voice, lang, rate) => play(() => speakOnce(text, voice, lang, rate));
+async function wait(ms, phase = '') {
+  if (phase) { R.phase = phase; updatePlayer(); }
+  let left = ms;
+  try {
+    while (left > 0) {
+      await sleep(50); takePending();
+      if (!R.paused) left -= 50;
+      if (phase) setBar(1 - left / ms);
+    }
+  } finally {
+    if (phase) { R.phase = ''; updatePlayer(); }
+  }
+}
+function setBar(f) { const b = $('#bar'); if (b) b.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%'; }
+
+// 区切り済みの番組音声があればそれを、なければ読み上げ音声を使う
+async function sayEn(s, i) {
+  const seg = segOf(R.lesson, s);
+  const ms = seg ? await play(() => playSeg(seg, S.audioRate)) : await say(s.en, voiceFor(R.lesson, s), 'en-US', S.rate);
+  R.dur[i] = ms;
+  return ms;
+}
+const est = (s, i) => {
+  const seg = segOf(R.lesson, s);
+  return R.dur[i] || (seg ? (seg.e - seg.s) * 1000 / S.audioRate : s.en.split(/\s+/).length * 400 / S.rate + 300);
+};
+
+async function eachSentence(fn) {
+  const list = R.lesson.sentences;
+  let i = 0;
+  while (i < list.length) {
+    R.idx = i; R.peek = false; R.revealEn = false; updatePlayer();
+    try { await fn(list[i], i); i++; }
+    catch (e) {
+      if (!(e instanceof Abort)) throw e;
+      if (e.kind === 'next') i++;
+      else if (e.kind === 'prev') i = Math.max(0, i - 1);
+      else if (e.kind !== 'replay') throw e;
+    }
+  }
+}
+
+const STEPS = [
+  { id: 'listen', short: '聞く', name: '通し聞き', desc: '英文を見ずに、まず全体を聞き取る',
+    show: () => ({ en: false, ja: false }),
+    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(500); }) },
+  { id: 'read', short: '見て聞く', name: '英文を見ながら聞く', desc: '英文と訳を確認しながら聞く',
+    show: () => ({ en: true, ja: true }),
+    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(900); }) },
+  { id: 'overlap', short: 'オーバーラップ', name: 'オーバーラッピング', desc: '英文を見ながら、音声とぴったり同時に声に出す',
+    show: () => ({ en: true, ja: false }),
+    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(800); }) },
+  { id: 'shadow', short: 'シャドー', name: 'シャドーイング', desc: '英文を見ずに、少し遅れて影のように追いかける',
+    show: () => ({ en: false, ja: false }),
+    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(800); }) },
+  { id: 'repeat', short: 'リピート', name: 'リピーティング', desc: '1文聞いたら、ビープ音のあとに同じように言う',
+    show: () => ({ en: S.repeatShowEn, ja: false }),
+    run: () => eachSentence(async (s, i) => { const ms = await sayEn(s, i); beep(); await wait(ms * S.repeatFactor + 600, 'turn'); }) },
+  { id: 'jaen', short: '日→英', name: '日→英 発話', desc: '日本語訳を見て英語で言う。そのあと正解を聞く',
+    show: () => ({ en: false, ja: true }),
+    run: () => eachSentence(async (s, i) => {
+      if (!s.ja.trim()) return;
+      if (S.jaSpeak) await say(s.ja, jaVoice(), 'ja-JP', 1.05); else await wait(600);
+      beep();
+      await wait(est(s, i) * S.jaenFactor + 1500, 'turn');
+      R.revealEn = true; updatePlayer();
+      await sayEn(s, i);
+      await wait(1200);
+    }) },
+];
+const courseItems = () => STEPS.filter(d => S.course[d.id] > 0).map(d => ({ id: d.id, n: S.course[d.id] }));
+
+async function startTraining(lessonId, items) {
+  const L = Store.get(lessonId);
+  if (!L || !L.sentences.length) return;
+  const plan = [];
+  for (const it of items) { const def = STEPS.find(d => d.id === it.id); for (let k = 1; k <= it.n; k++) plan.push({ def, rep: k, of: it.n }); }
+  if (!L.sentences.some(s => s.ja)) { // 和訳がないレッスンでは「日→英」を省く
+    for (let k = plan.length - 1; k >= 0; k--) if (plan[k].def.id === 'jaen') plan.splice(k, 1);
+    if (!plan.length) { toast('このレッスンには日本語訳がないため「日→英」は使えません(編集で訳を追加できます)'); return; }
+  }
+  if (!plan.length) { toast('フルコースのステップがすべて0回になっています(設定で変更できます)'); return; }
+
+  speechSynthesis.cancel(); prepareAudio(L); unlock();
+  const run = R = { lesson: L, items, plan, stepIdx: 0, idx: 0, paused: false, pending: null, dur: {},
+    show: { en: true, ja: true }, peek: false, revealEn: false, phase: '', done: false };
+  view = { name: 'player', id: lessonId }; render(); keepAwake(true);
+  try {
+    for (let k = 0; k < plan.length; k++) {
+      R.stepIdx = k; R.idx = 0; R.show = plan[k].def.show(); updatePlayer();
+      try {
+        try {
+          if (S.announce) await say(plan[k].def.name, jaVoice(), 'ja-JP', 1.05);
+          await wait(500);
+        } catch (e) { if (!(e instanceof Abort) || !['next', 'prev', 'replay'].includes(e.kind)) throw e; }
+        await plan[k].def.run();
+      } catch (e) { if (e instanceof Abort && e.kind === 'nextStep') continue; throw e; }
+    }
+    R.done = true;
+    L.history = [...(L.history || []), { at: Date.now(), steps: plan.map(p => p.def.id) }];
+    Store.save();
+    updatePlayer();
+  } catch (e) {
+    if (!(e instanceof Abort)) { console.error(e); toast('エラー: ' + e.message); }
+    if (R === run) { R = null; view = { name: 'lesson', id: lessonId }; render(); }
+  } finally { keepAwake(false); }
+}
+
+// ================================================================ views
+let view = { name: 'home' };
+let lastKey = '';
+
+function render() {
+  const fn = { home: vHome, lesson: vLesson, edit: vEdit, settings: vSettings, segs: vSegs, assign: vAssign, player: () => '<div class="player" id="player"></div>' }[view.name] || vHome;
+  const cur = view.id && Store.get(view.id);
+  if (cur && hasAudio(cur) && !audioUrls.has(cur.id)) loadAudioUrl(cur).then(() => { if (cur.audio?.missing && view.id === cur.id) render(); });
+  $('#app').innerHTML = fn();
+  if (view.name === 'player') updatePlayer();
+  if (view.name === 'segs') segLoop();
+  const key = view.name + ':' + (view.id || '');
+  if (key !== lastKey) { window.scrollTo(0, 0); lastKey = key; }
+}
+
+const bar = (left, title, right = '') => `<header class="bar"><div class="side">${left}</div><h1>${title}</h1><div class="side r">${right}</div></header>`;
+const fmtDate = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; };
+
+function vHome() {
+  const ls = [...Store.lessons].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+  return bar('', 'Shadowing Coach', '<button class="icon" data-act="settings" aria-label="設定">設定</button>') + `
+  <main class="wrap">
+    <button class="primary block" data-act="clipImport">📋 クリップボードから取り込む</button>
+    <label class="filebtn block center">🔊 音声をまとめて割り当て<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" multiple data-file="assign" hidden></label>
+    <div class="row wrap2"><button data-act="new">＋ 手入力で追加</button>
+      <label class="filebtn center">音声だけでレッスン作成<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" multiple data-file="batch" hidden></label></div>
+    ${ls.length ? `<ul class="lessons">${ls.map(l => {
+      const h = l.history || [];
+      return `<li><button class="lesson" data-act="open" data-id="${esc(l.id)}">
+        <div class="lt">${esc(l.title || '無題')}</div>
+        <div class="lm">${l.date ? esc(l.date) + ' · ' : ''}${hasAudio(l) ? '🔊 ' : ''}${l.sentences.length}文 · 練習${h.length}回${h.length ? '(最終 ' + fmtDate(h[h.length - 1].at) + ')' : ''}</div>
+      </button></li>`; }).join('')}</ul>`
+    : '<p class="empty">まだレッスンがありません。<br>「レッスンを追加」からスクリプトを取り込みましょう。</p>'}
+    ${Store.ok ? '' : '<p class="note">この端末に保存できません。プライベートブラウズを使っている場合は通常のタブで開いてください。</p>'}
+  </main>`;
+}
+
+function vLesson() {
+  const L = Store.get(view.id);
+  if (!L) { view = { name: 'home' }; return vHome(); }
+  const course = courseItems();
+  const nSeg = L.sentences.filter(s => segOf(L, s)).length, N = L.sentences.length;
+  const audioMsg = !hasAudio(L) ? 'MP3 などを取り込むと、読み上げの代わりに番組の音声で練習できます'
+    : nSeg === N ? `${N}文すべて区切り済み。練習は番組音声で流れます`
+    : `${nSeg}/${N}文を区切り済み。区切っていない文は読み上げ音声になります`;
+  if (!N) return bar('<button class="icon" data-act="home">‹ 一覧</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
+  <main class="wrap">
+    <p class="empty">まだスクリプトがありません。<br>英文と日本語訳を追加しましょう。${hasAudio(L) ? '<br>保存すると、音声も自動で文ごとに区切ります。' : ''}</p>
+    <button class="primary block" data-act="clipImport">📋 クリップボードから取り込む</button>
+    <button class="block" data-act="edit">手で入力・貼り付けて追加</button>
+    <p class="hint">書き起こしのページで「Shadowingに送る」ブックマークを押してコピーしてから、上のボタンを押してください(登録方法は 設定 → サイトから取り込む)。</p>
+    <button class="ghost danger" data-act="del">このレッスンを削除</button>
+  </main>`;
+  return bar('<button class="icon" data-act="home">‹ 一覧</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
+  <main class="wrap">
+    <button class="primary block big" data-act="course">▶ フルコースで練習
+      <small>${course.map(c => STEPS.find(d => d.id === c.id).short + (c.n > 1 ? '×' + c.n : '')).join(' → ') || '(設定でステップを選んでください)'}</small></button>
+    <div class="steps">${STEPS.map(d => `<button class="step" data-act="step" data-step="${d.id}"><b>${d.name}</b><span>${d.desc}</span></button>`).join('')}</div>
+    <button class="audiocard" data-act="segs"><b>🔊 番組音声 ${hasAudio(L) ? '— 区切りを編集' : 'を追加'}</b><span>${audioMsg}</span></button>
+    <div class="listhead"><h2>スクリプト <small>タップで再生 / 🐢 でゆっくり</small></h2>
+      <div class="toggles">
+        <label><input type="checkbox" data-act="hideEn" ${view.hideEn ? 'checked' : ''}>英文を隠す</label>
+        <label><input type="checkbox" data-act="hideJa" ${view.hideJa ? 'checked' : ''}>訳を隠す</label>
+      </div></div>
+    <ol class="sents">${L.sentences.map((s, i) => `<li>
+      <button class="sent" data-act="play" data-i="${i}">
+        ${s.speaker ? `<span class="spk">${esc(s.speaker)}</span>` : ''}
+        <span class="en ${view.hideEn ? 'hid' : ''}">${esc(s.en)}</span>
+        ${s.ja ? `<span class="ja ${view.hideJa ? 'hid' : ''}">${esc(s.ja)}</span>` : ''}
+      </button>
+      <button class="slow" data-act="slow" data-i="${i}" aria-label="ゆっくり再生">🐢</button></li>`).join('')}</ol>
+    ${L.url ? `<p class="hint">出典: <a href="${esc(L.url)}" target="_blank" rel="noopener noreferrer">${esc(L.url)}</a></p>` : ''}
+    <button class="ghost danger" data-act="del">このレッスンを削除</button>
+  </main>`;
+}
+
+function vEdit() {
+  const d = view.draft;
+  return bar('<button class="icon" data-act="cancelEdit">‹ 戻る</button>', d.id ? 'レッスンを編集' : 'レッスンを追加', '<button class="icon" data-act="saveLesson">保存</button>') + `
+  <main class="wrap">
+    <label class="f">タイトル<input data-f="title" value="${esc(d.title)}" placeholder="例: Lesson 121 〇〇の表現"></label>
+    <label class="f">日付<input type="date" data-f="date" value="${esc(d.date)}"></label>
+    <section class="card">
+      <h2>① スクリプトを取り込む</h2>
+      ${Store.server ? `<div class="row"><input type="url" data-f="url" value="${esc(d.url)}" placeholder="スクリプトが載っているページのURL" autocapitalize="off"><button data-act="fetchUrl">取得</button></div>
+      <p class="hint">ページ本文を下の欄に読み込みます。うまく取れないときは、ページの本文をコピーして直接貼り付けてください。不要な部分を消してから「抽出」し直すこともできます。</p>`
+      : `<p class="hint">スクリプトが載っているページを Safari で開き、会話の部分を選択してコピー → 下の欄に貼り付けて「抽出」を押してください。余分な部分が入っていても、抽出後に ✕ で消せます。</p>
+      <input type="url" data-f="url" value="${esc(d.url)}" placeholder="出典ページのURL(メモ用・任意)" autocapitalize="off">`}
+      <textarea data-f="raw" rows="8" placeholder="英文と日本語訳が並んだテキスト(英→訳→英→訳… でも、英文のまとまり→訳のまとまり でもOK)">${esc(d.raw)}</textarea>
+      <div class="row wrap2"><button data-act="pasteRaw">📋 クリップボードから貼り付け</button><button data-act="parse">英文と訳を抽出 ↓</button></div>
+    </section>
+    <section class="card">
+      <h2>② 確認・修正 <small>${d.rows.length}文</small></h2>
+      ${d.rows.map((r, i) => `<div class="erow" data-i="${i}">
+        <div class="erow-h"><span>${i + 1}</span><input data-r="speaker" value="${esc(r.speaker)}" placeholder="話者(任意)">
+          ${i ? `<button class="sm" data-act="merge" data-i="${i}" title="上の行とつなげる">↑結合</button>` : ''}
+          <button class="sm danger" data-act="rm" data-i="${i}" aria-label="削除">✕</button></div>
+        <textarea data-r="en" rows="2" placeholder="English">${esc(r.en)}</textarea>
+        <textarea data-r="ja" rows="2" placeholder="日本語訳">${esc(r.ja)}</textarea>
+      </div>`).join('')}
+      <button data-act="addRow">＋ 行を追加</button>
+    </section>
+    <button class="primary block" data-act="saveLesson">保存する</button>
+  </main>`;
+}
+
+function vSettings() {
+  const opt = (filter, sel) => '<option value="">自動で選ぶ</option>' + voices.filter(v => filter(v) && !NOVELTY.test(v.name))
+    .map(v => `<option value="${esc(v.name)}" ${v.name === sel ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  const range = (k, label, min, max, step, fmt) => `<label class="f"><span>${label} <output>${fmt(S[k])}</output></span>
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${S[k]}" data-s="${k}" data-num></label>`;
+  const chk = (k, label) => `<label class="chk"><input type="checkbox" data-s="${k}" ${S[k] ? 'checked' : ''}>${label}</label>`;
+  return bar('<button class="icon" data-act="back">‹ 戻る</button>', '設定') + `
+  <main class="wrap">
+    <section class="card"><h2>声</h2>
+      ${voices.length ? '' : '<p class="hint">音声を読み込み中…</p>'}
+      <label class="f">英語の声(1人目の話者)<select data-s="enVoice">${opt(isEn, S.enVoice)}</select></label>
+      <label class="f">英語の声(2人目の話者)<select data-s="enVoice2">${opt(isEn, S.enVoice2)}</select></label>
+      <label class="f">日本語の声<select data-s="jaVoice">${opt(isJa, S.jaVoice)}</select></label>
+      ${range('rate', '英語の速さ', 0.5, 1.4, 0.05, v => v.toFixed(2) + '×')}
+      <button data-act="testVoice">試しに聞く</button>
+      <p class="hint">Mac・iPhone は「設定 → アクセシビリティ → 読み上げコンテンツ → 声」で英語の「拡張」「プレミアム」音声をダウンロードすると、ぐっと自然な発音になります(追加後にこのページを再読み込み)。</p>
+    </section>
+    <section class="card"><h2>フルコースの内容</h2>
+      <p class="hint">各ステップの回数。0 にすると省略します。</p>
+      ${STEPS.map(d => `<label class="f inline">${d.name}<input type="number" inputmode="numeric" min="0" max="5" data-course="${d.id}" value="${S.course[d.id] ?? 0}"></label>`).join('')}
+    </section>
+    <section class="card"><h2>トレーニング</h2>
+      ${range('audioRate', '番組音声の速さ', 0.5, 1.5, 0.05, v => v.toFixed(2) + '×')}
+      ${range('repeatFactor', 'リピーティングで話す時間(音声の長さ×)', 0.8, 3, 0.1, v => v.toFixed(1) + '倍')}
+      ${range('jaenFactor', '日→英で考える時間(英文の長さ×)', 1, 4, 0.1, v => v.toFixed(1) + '倍')}
+      ${chk('repeatShowEn', 'リピーティング中も英文を表示する')}
+      ${chk('jaSpeak', '日→英で日本語訳を読み上げる')}
+      ${chk('announce', 'ステップの名前を音声で案内する')}
+      ${chk('beep', '「あなたの番」でビープ音を鳴らす')}
+    </section>
+    <section class="card"><h2>サイトから取り込む(ブックマークレット)</h2>
+      <p class="hint">noteやブログの書き起こしページから、ワンタップで台本をコピーできるようにします。最初に一度だけ登録してください。</p>
+      <ol class="hint steps-list">
+        <li>下の「コードをコピー」を押す</li>
+        <li>Safari で適当なページを開き、共有ボタン →「ブックマークを追加」(名前は「Shadowingに送る」など)</li>
+        <li>ブックマーク一覧でそのブックマークを長押し →「編集」→ アドレス欄を全部消して、コピーしたコードを貼り付けて保存</li>
+      </ol>
+      <p class="hint">使い方: 書き起こしのページでそのブックマークを開く →「このページをコピー」→ このアプリで「📋 クリップボードから取り込む」。「DIALOGUE」の見出しがあれば、その部分だけを自動で取り出します。</p>
+      <p class="hint">note では「期間でまとめて取得」もできます: その人の記事を開いてブックマークを押し、開始日・終了日を選んで取得 →「まとめてコピー」→ アプリで取り込むと、記事ごとにレッスンができます。そのあとホームの「🔊 音声をまとめて割り当て」で DIALOGUE の MP3 を選ぶと、日付順に割り当てて自動で区切ります。</p>
+      <button data-act="copyBookmarklet">コードをコピー</button>
+    </section>
+    <section class="card"><h2>バックアップ</h2>
+      <p class="hint">レッスンはこの端末の中だけに保存されています。機種変更に備えて、ときどきバックアップを保存してください(スクリプト・区切り・練習記録。音声ファイルは含みません)。</p>
+      <div class="row wrap2"><button data-act="backup">バックアップを保存</button>
+        <label class="filebtn center">バックアップから復元<input type="file" accept=".json,application/json" data-file="restore" hidden></label></div>
+    </section>
+  </main>`;
+}
+
+// ================================================================ 番組音声の取り込み・区切り
+const fmtT = t => {
+  if (t == null || !isFinite(t)) return '--:--';
+  const m = Math.floor(t / 60);
+  return `${m}:${(t - m * 60).toFixed(1).padStart(4, '0')}`;
+};
+const audioDur = L => (isFinite(audioEl.duration) ? audioEl.duration : L.audio?.duration || view.env?.duration || 0);
+
+function openSegs(id) {
+  const L = Store.get(id);
+  // 会話の範囲は最初はファイル全体(「ダイアログ」のトラックならそのまま自動で区切れる)
+  view = { name: 'segs', id, segs: L.sentences.map(s => (s.seg ? { ...s.seg } : null)), dlgS: hasAudio(L) ? 0 : null, dlgE: L.audio?.duration ?? null, tap: null, env: null, dirty: false };
+  render();
+  return loadEnv(L);
+}
+async function loadEnv(L) {
+  if (!hasAudio(L)) return;
+  await loadAudioUrl(L); prepareAudio(L);
+  const env = await idb.get('env:' + L.id).catch(() => null);
+  if (view.name === 'segs' && view.id === L.id) {
+    view.env = env || null;
+    if (env && view.dlgE == null) view.dlgE = env.duration;
+    render();
+  }
+}
+
+function vSegs() {
+  const L = Store.get(view.id);
+  if (!L) { view = { name: 'home' }; return vHome(); }
+  const v = view, N = L.sentences.length;
+  const head = bar('<button class="icon" data-act="segsBack">‹ 戻る</button>', '番組音声', hasAudio(L) ? '<button class="icon" data-act="segsSave">保存</button>' : '');
+  const fileCard = `<section class="card"><h2>① 音声ファイル</h2>
+    ${v.busy ? '<p class="hint">音声を読み込んでいます…</p>'
+      : hasAudio(L) ? `<p class="hint">${esc(L.audio.name)} · ${fmtT(L.audio.duration)}</p>`
+      : `${L.audio?.missing ? '<p class="hint">⚠ この端末に音声ファイルがありません。同じファイルを選び直すと、区切りはそのまま使えます。</p>' : ''}
+         <p class="hint">「ダイアログ」の MP3 を選んでください(NHK出版サイトのマイコンテンツからダウンロードしたもの)。iPhone では AirDrop などで「ファイル」アプリに入れておくと選べます。</p>`}
+    <div class="row"><label class="filebtn">${hasAudio(L) ? '別のファイルに変更' : '音声ファイルを選ぶ'}<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" data-file="upload" hidden ${v.busy ? 'disabled' : ''}></label>
+      ${hasAudio(L) ? '<button class="ghost danger" data-act="audioDel">音声を削除</button>' : ''}</div></section>`;
+  if (!hasAudio(L)) return head + `<main class="wrap">${fileCard}</main>`;
+  const done = v.segs.filter(Boolean).length;
+  return head + `<main class="wrap">
+    ${fileCard}
+    <section class="card"><h2>② 再生位置</h2>
+      <canvas id="wavAll" class="wav" data-act="wavSeek" data-w="all"></canvas>
+      <canvas id="wavZoom" class="wav zoom" data-act="wavSeek" data-w="zoom"></canvas>
+      <div class="transport">
+        <button data-act="seek" data-d="-5">-5秒</button><button data-act="seek" data-d="-1">-1</button>
+        <button class="primary" id="ppBtn" data-act="playPause">▶</button>
+        <button data-act="seek" data-d="1">+1</button><button data-act="seek" data-d="5">+5秒</button>
+      </div>
+      <div class="time" id="tNow"></div>
+      <p class="hint">波形をタップするとその位置へ移動します(上: 全体 / 下: 拡大)。色の帯が区切った文です。</p>
+    </section>
+    <section class="card"><h2>③ 文に区切る</h2>
+      <p class="hint"><b>自動:</b> 「ダイアログ」のトラックなら、そのまま「自動で区切る」でOK(最初はファイル全体が範囲です)。番組全体の音声なら、会話の始まり・終わりの位置を登録してから押してください。無音の切れ目と文の長さから推測します。</p>
+      <div class="row wrap2">
+        <button data-act="dlgMark" data-k="dlgS">会話の開始 = 現在位置<small>${fmtT(v.dlgS)}</small></button>
+        <button data-act="dlgMark" data-k="dlgE">会話の終わり = 現在位置<small>${fmtT(v.dlgE)}</small></button>
+      </div>
+      <button data-act="autoSplit" ${v.env ? '' : 'disabled'}>自動で区切る${v.env ? '' : '(音量データなし)'}</button>
+      <p class="hint"><b>手動:</b> 会話の少し前から再生し、各文を話し始めた瞬間にタップ。最後の文が終わったらもう一度タップ。Mac ではスペースキーでも押せます。</p>
+      ${v.tap == null ? '<button data-act="tapStart">タップで区切る を開始</button>'
+        : `<button class="primary big block" data-act="tap">${v.tap < N ? `${v.tap + 1}文目の始まりでタップ` : '最後の文の終わりでタップ'}<small>${esc(L.sentences[Math.min(v.tap, N - 1)].en)}</small></button>
+           <button class="ghost" data-act="tapCancel">中止</button>`}
+    </section>
+    <section class="card"><h2>④ 確認・微調整 <small>${done}/${N}文</small></h2>
+      <p class="hint">▶ で区間を再生。始・終の − / ＋ で 0.1秒ずつ調整します(調整した側を試聴します)。</p>
+      ${L.sentences.map((s, i) => { const g = v.segs[i]; return `<div class="srow ${g ? '' : 'none'}">
+        <div class="srow-t"><span class="n">${i + 1}</span><span>${esc(s.en)}</span></div>
+        <div class="srow-c">
+          <button class="sm" data-act="segPlay" data-i="${i}" ${g ? '' : 'disabled'}>▶</button>
+          <span class="tm">${g ? `${fmtT(g.s)} – ${fmtT(g.e)}` : '未設定'}</span>
+          <span class="lbl">始</span><button class="sm" data-act="nudge" data-i="${i}" data-k="s" data-d="-0.1" ${g ? '' : 'disabled'}>−</button><button class="sm" data-act="nudge" data-i="${i}" data-k="s" data-d="0.1" ${g ? '' : 'disabled'}>＋</button>
+          <span class="lbl">終</span><button class="sm" data-act="nudge" data-i="${i}" data-k="e" data-d="-0.1" ${g ? '' : 'disabled'}>−</button><button class="sm" data-act="nudge" data-i="${i}" data-k="e" data-d="0.1" ${g ? '' : 'disabled'}>＋</button>
+          <button class="sm" data-act="segNow" data-i="${i}" data-k="s">始=今</button><button class="sm" data-act="segNow" data-i="${i}" data-k="e">終=今</button>
+        </div></div>`; }).join('')}
+    </section>
+    <button class="primary block" data-act="segsSave">保存する</button>
+  </main>`;
+}
+
+// ---- 無音の検出(env.data は 10ms ごとの音量 0〜100)
+function analyze(env, t0, t1) {
+  const st = env.step, d = env.data;
+  const a = Math.max(0, Math.floor(t0 / st)), b = Math.min(d.length, Math.ceil(t1 / st));
+  if (b - a < 10) return null;
+  const vals = Array.from(d.slice(a, b)).sort((x, y) => x - y);
+  const lo = vals[Math.floor(vals.length * 0.1)], hi = vals[Math.floor(vals.length * 0.9)];
+  const thr = lo + (hi - lo) * 0.35;
+  const runs = [];
+  let rs = null;
+  for (let k = a; k <= b; k++) {
+    const quiet = k < b && d[k] < thr;
+    if (quiet && rs == null) rs = k;
+    if (!quiet && rs != null) { if ((k - rs) * st >= 0.15) runs.push({ a: rs * st, b: k * st }); rs = null; }
+  }
+  return { thr, runs };
+}
+
+// 区間 [t0, t1] を文の数で区切る。成功すれば [{s, e}, ...]、失敗ならエラーメッセージを返す
+function computeSplit(env, sentences, t0, t1) {
+  const N = sentences.length;
+  const A = analyze(env, t0, t1);
+  if (!A) return '区間が短すぎます';
+  let S0 = t0, E0 = t1;
+  const r0 = A.runs.find(r => r.a <= S0 + 0.05 && r.b > S0); // 開始位置が無音の中なら、声の始まりまで進める
+  if (r0) S0 = Math.max(S0, r0.b - 0.08);
+  const r1 = [...A.runs].reverse().find(r => r.b >= E0 - 0.05 && r.a < E0);
+  if (r1) E0 = Math.min(E0, r1.a + 0.1);
+  if (N === 1) return [{ s: S0, e: E0 }];
+  const cands = A.runs.filter(r => r.a > S0 + 0.3 && r.b < E0 - 0.3);
+  if (cands.length < N - 1) return `文の切れ目(無音)が足りません(${cands.length}か所)。区間を見直すか、手動で区切ってください`;
+  // 文の長さ(単語数)の比率に近く、かつ長い無音で切れる組み合わせを動的計画法で選ぶ
+  const w = sentences.map(s => s.en.split(/\s+/).length + 1), W = w.reduce((a, b) => a + b, 0);
+  const exp = w.map(x => (E0 - S0) * x / W);
+  const cost = (i, a, b) => ((b - a - exp[i]) / Math.max(exp[i], 1)) ** 2;
+  const bonus = r => 0.6 * Math.min(r.b - r.a, 1.2);
+  const M = cands.length;
+  const dp = Array.from({ length: N - 1 }, () => new Float64Array(M).fill(Infinity));
+  const bk = Array.from({ length: N - 1 }, () => new Int32Array(M).fill(-1));
+  for (let j = 0; j < M; j++) dp[0][j] = cost(0, S0, cands[j].a) - bonus(cands[j]);
+  for (let i = 1; i < N - 1; i++) {
+    for (let j = i; j < M; j++) {
+      let best = Infinity, bj = -1;
+      for (let k = i - 1; k < j; k++) {
+        if (dp[i - 1][k] === Infinity) continue;
+        const t = dp[i - 1][k] + cost(i, cands[k].b, cands[j].a);
+        if (t < best) { best = t; bj = k; }
+      }
+      dp[i][j] = best - bonus(cands[j]); bk[i][j] = bj;
+    }
+  }
+  let bestJ = -1, best = Infinity;
+  for (let j = N - 2; j < M; j++) {
+    const t = dp[N - 2][j] + cost(N - 1, cands[j].b, E0);
+    if (t < best) { best = t; bestJ = j; }
+  }
+  const cuts = [];
+  for (let i = N - 2, j = bestJ; i >= 0; j = bk[i][j], i--) cuts.unshift(cands[j]);
+  const r3 = x => Math.round(x * 1000) / 1000;
+  return sentences.map((_, i) => ({ s: r3(i ? cuts[i - 1].b - 0.08 : S0), e: r3(i < N - 1 ? cuts[i].a + 0.08 : E0) }));
+}
+
+function autoSplit() {
+  const v = view, L = Store.get(v.id);
+  if (!v.env) return toast('音量データがないため自動では区切れません。手動で区切ってください');
+  if (v.dlgS == null || v.dlgE == null || v.dlgE - v.dlgS < 1) return toast('先に「会話の開始」と「会話の終わり」の位置を登録してください');
+  const segs = computeSplit(v.env, L.sentences, v.dlgS, v.dlgE);
+  if (typeof segs === 'string') return toast(segs);
+  v.segs = segs; v.dirty = true; render();
+  toast(`${segs.length}文に区切りました。▶ で確認して、ずれていたら微調整してください`);
+}
+
+// 手動で区切った境界を、近くの無音に合わせる
+function snapAll() {
+  const v = view, segs = v.segs, idx = segs.map((g, i) => (g ? i : -1)).filter(i => i >= 0);
+  if (!v.env || !idx.length) return;
+  const A = analyze(v.env, segs[idx[0]].s - 3, segs[idx.at(-1)].e + 3);
+  if (!A) return;
+  const near = (t, maxd) => {
+    let best = null, bd = maxd;
+    for (const r of A.runs) {
+      const d = t < r.a ? r.a - t : t > r.b ? t - r.b : -(r.b - r.a); // 中に入っていれば長い無音を優先
+      if (d < bd) { bd = d; best = r; }
+    }
+    return best;
+  };
+  for (let k = 1; k < idx.length; k++) {
+    const p = segs[idx[k - 1]], c = segs[idx[k]];
+    const r = near((p.e + c.s) / 2, 0.6);
+    if (r) { p.e = r.a + 0.08; c.s = Math.max(p.e, r.b - 0.08); }
+  }
+  const f = segs[idx[0]], l = segs[idx.at(-1)];
+  const r0 = near(f.s, 0.5); if (r0 && r0.b - 0.08 < f.e) f.s = r0.b - 0.08;
+  const r1 = near(l.e, 0.5); if (r1 && r1.a + 0.1 > l.s) l.e = r1.a + 0.1;
+}
+
+async function uploadAudio(file) {
+  const L = Store.get(view.id);
+  if (!file || !L) return;
+  view.busy = true; render();
+  try {
+    await attachAudio(L, file);
+    await Store.save();
+    await openSegs(L.id);
+    if (L.sentences.length && !view.segs.some(Boolean)) autoSplit(); // 全体を自動で区切っておく(ずれていれば調整)
+    else toast('取り込みました');
+  } catch (e) {
+    console.error(e);
+    toast('この音声ファイルは読み込めませんでした(MP3 / M4A / WAV を選んでください)');
+    view.busy = false; render();
+  }
+}
+
+// ダイアログ音声を複数選んで、1ファイル=1レッスンとしてまとめて作る
+async function batchCreate(files) {
+  files = [...files].sort((a, b) => a.name.localeCompare(b.name, 'ja', { numeric: true }));
+  let made = 0;
+  for (const f of files) {
+    toast(`音声を読み込んでいます… ${made + 1}/${files.length}`);
+    const L = { id: uid(), title: f.name.replace(/\.[^.]+$/, ''), date: '', url: '', createdAt: Date.now() + made, history: [], sentences: [] };
+    try { await attachAudio(L, f); Store.lessons.push(L); made++; }
+    catch (e) { console.error(e); toast(`読み込めませんでした: ${f.name}`); await sleep(1500); }
+  }
+  await Store.save(); render();
+  toast(`${made}件のレッスンを作りました。各レッスンでスクリプトを追加してください`);
+}
+
+// ---- 波形の描画
+let segRAF = 0, zoomWin = [0, 12], frameNo = 0;
+function sizeCanvas(c) {
+  const dpr = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [ctx, w, h];
+}
+function drawWave(c, t0, t1, labels) {
+  if (!c || t1 <= t0) return;
+  const [ctx, W, H] = sizeCanvas(c), v = view, env = v.env;
+  const cs = getComputedStyle(document.documentElement), col = k => cs.getPropertyValue(k).trim();
+  const X = t => (t - t0) / (t1 - t0) * W;
+  ctx.clearRect(0, 0, W, H);
+  v.segs.forEach((g, i) => {
+    if (!g || g.e < t0 || g.s > t1) return;
+    ctx.globalAlpha = i % 2 ? 0.16 : 0.3; ctx.fillStyle = col('--accent');
+    ctx.fillRect(X(g.s), 0, Math.max(1, X(g.e) - X(g.s)), H);
+    ctx.globalAlpha = 1;
+    if (labels) { ctx.fillStyle = col('--accent'); ctx.font = '600 11px system-ui'; ctx.fillText(String(i + 1), X(g.s) + 3, 12); }
+  });
+  if (env) {
+    ctx.fillStyle = col('--sub');
+    const st = env.step, d = env.data;
+    for (let x = 0; x < W; x++) {
+      const a = Math.floor((t0 + x / W * (t1 - t0)) / st), b = Math.max(a + 1, Math.floor((t0 + (x + 1) / W * (t1 - t0)) / st));
+      let m = 0;
+      for (let k = Math.max(0, a); k < b && k < d.length; k++) if (d[k] > m) m = d[k];
+      const h = m / 100 * (H - 6);
+      ctx.fillRect(x, (H - h) / 2, 1, Math.max(1, h));
+    }
+  }
+  ctx.fillStyle = col('--ok');
+  for (const t of [v.dlgS, v.dlgE]) if (t != null && t >= t0 && t <= t1) ctx.fillRect(X(t) - 1, 0, 2, H);
+  ctx.fillStyle = col('--danger');
+  ctx.fillRect(X(audioEl.currentTime) - 1, 0, 2, H);
+}
+function segLoop() {
+  cancelAnimationFrame(segRAF);
+  const tick = () => {
+    if (view.name !== 'segs') return;
+    const L = Store.get(view.id), dur = audioDur(L), ct = audioEl.currentTime;
+    if (frameNo++ % 4 === 0) drawWave($('#wavAll'), 0, dur, false);
+    const t0 = Math.max(0, Math.min(ct - 4, dur - 12));
+    zoomWin = [t0, t0 + 12];
+    drawWave($('#wavZoom'), zoomWin[0], zoomWin[1], true);
+    const tn = $('#tNow'); if (tn) tn.textContent = `${fmtT(ct)} / ${fmtT(dur)}`;
+    const pp = $('#ppBtn'); if (pp) pp.textContent = audioEl.paused ? '▶' : '⏸';
+    segRAF = requestAnimationFrame(tick);
+  };
+  tick();
+}
+function stopEditorAudio() { finishSpeech?.(false); audioEl.pause(); }
+
+function updatePlayer() {
+  const el = $('#player');
+  if (!el || !R) return;
+  const L = R.lesson;
+  if (R.done) {
+    el.innerHTML = bar('<button class="icon" data-act="stop">✕ 閉じる</button>', esc(L.title)) + `
+    <div class="stage done"><div class="em">🎉</div><h2>お疲れさまでした！</h2>
+      <p>${R.plan.length}ステップ完了 · このレッスンの練習 ${L.history.length}回目</p>
+      <button class="primary block" data-act="restart">もう一度</button>
+      <button class="block" data-act="stop">レッスンに戻る</button></div>`;
+    return;
+  }
+  const st = R.plan[R.stepIdx], s = L.sentences[R.idx];
+  const showEn = R.show.en || R.peek || R.revealEn, showJa = R.show.ja || R.peek;
+  el.innerHTML = bar('<button class="icon" data-act="stop">✕ 終了</button>', esc(L.title), `<span class="cnt">${R.stepIdx + 1}/${R.plan.length}</span>`) + `
+  <div class="pills">${R.plan.map((p, k) => `<span class="pill ${k < R.stepIdx ? 'done' : k === R.stepIdx ? 'cur' : ''}">${p.def.short}</span>`).join('')}</div>
+  <div class="stage">
+    <div class="stepname">${st.def.name}${st.of > 1 ? ` <small>${st.rep}/${st.of}回目</small>` : ''}</div>
+    <div class="stepdesc">${st.def.desc}</div>
+    <button class="card sentcard" data-act="peek">
+      <div class="num">${R.idx + 1} / ${L.sentences.length}${s.speaker ? ' · ' + esc(s.speaker) : ''}</div>
+      <div class="en ${showEn ? '' : 'hid'}">${esc(s.en)}</div>
+      ${s.ja ? `<div class="ja ${showJa ? '' : 'hid'}">${esc(s.ja)}</div>` : ''}
+      ${!showEn || (s.ja && !showJa) ? '<div class="peekhint">タップで一時的に表示</div>' : ''}
+    </button>
+    <div class="turn">${R.phase === 'turn' ? 'あなたの番 🎤' : R.paused ? '一時停止中' : ''}</div>
+    <div class="meter"><div id="bar"></div></div>
+  </div>
+  <div class="controls">
+    <button data-act="prev" aria-label="前の文">⏮</button>
+    <button data-act="replay" aria-label="この文をもう一度">↻</button>
+    <button class="primary" data-act="pause" aria-label="${R.paused ? '再開' : '一時停止'}">${R.paused ? '▶' : '⏸'}</button>
+    <button data-act="next" aria-label="次の文">⏭</button>
+  </div>
+  <button class="ghost nextstep" data-act="nextStep">このステップを飛ばす ⏩</button>`;
+}
+
+// ================================================================ actions
+function quickPlay(i, slow) {
+  const L = Store.get(view.id), s = L?.sentences[i];
+  if (!s) return;
+  speechSynthesis.cancel(); unlock();
+  document.querySelectorAll('.sent.playing').forEach(b => b.classList.remove('playing'));
+  const btn = document.querySelector(`.sent[data-i="${i}"]`);
+  btn?.classList.add('playing');
+  const seg = segOf(L, s);
+  if (seg) { finishSpeech?.(false); prepareAudio(L); unlock(); }
+  setTimeout(() => (seg ? playSeg(seg, slow ? Math.max(0.5, S.audioRate * 0.75) : S.audioRate)
+    : speakOnce(s.en, voiceFor(L, s), 'en-US', slow ? Math.max(0.5, S.rate * 0.7) : S.rate))
+    .then(() => btn?.classList.remove('playing')), 50);
+}
+
+const ACTS = {
+  home() { view = { name: 'home' }; render(); },
+  settings() { view = { name: 'settings', back: view }; render(); },
+  back() { view = view.back || { name: 'home' }; render(); },
+  open(el) { view = { name: 'lesson', id: el.dataset.id }; render(); },
+  new() { view = { name: 'edit', draft: { title: '', date: today(), url: '', raw: '', rows: [] } }; render(); },
+  edit() {
+    const L = Store.get(view.id);
+    view = { name: 'edit', id: L.id, draft: { id: L.id, title: L.title, date: L.date || '', url: L.url || '', raw: '', rows: L.sentences.map(s => ({ ...s })) } };
+    render();
+  },
+  cancelEdit() { const id = view.draft.id; view = id ? { name: 'lesson', id } : { name: 'home' }; render(); },
+  async fetchUrl(el) {
+    const d = view.draft;
+    if (!d.url.trim()) return toast('URLを入力してください');
+    el.disabled = true; el.textContent = '取得中…';
+    try {
+      const r = await fetch('api/fetch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: d.url.trim() }) });
+      const j = await r.json().catch(() => ({ error: 'サーバーに接続できません' }));
+      if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+      d.raw = j.lines.join('\n');
+      if (!d.title) d.title = j.title;
+      d.rows = parseScript(d.raw);
+      render();
+      toast(d.rows.length ? `${d.rows.length}文を抽出しました。不要な行は ✕ で削除してください` : '英文が見つかりませんでした。本文を貼り付けてみてください');
+    } catch (e) {
+      toast(e instanceof TypeError ? 'サーバーに接続できません(server.py を起動してください)' : e.message);
+      el.disabled = false; el.textContent = '取得';
+    }
+  },
+  parse() {
+    view.draft.rows = parseScript(view.draft.raw); render();
+    toast(view.draft.rows.length ? `${view.draft.rows.length}文を抽出しました` : '英文が見つかりませんでした');
+  },
+  rm(el) { view.draft.rows.splice(+el.dataset.i, 1); render(); },
+  merge(el) {
+    const rows = view.draft.rows, i = +el.dataset.i, a = rows[i - 1], b = rows[i];
+    a.en = [a.en, b.en].filter(Boolean).join(' '); a.ja = (a.ja || '') + (b.ja || '');
+    a.seg = a.seg && b.seg ? { s: a.seg.s, e: b.seg.e } : a.seg || b.seg;
+    rows.splice(i, 1); render();
+  },
+  addRow() { view.draft.rows.push({ speaker: '', en: '', ja: '' }); render(); },
+  async saveLesson() {
+    const d = view.draft;
+    const rows = d.rows.map(r => ({ speaker: (r.speaker || '').trim(), en: (r.en || '').trim(), ja: (r.ja || '').trim(), ...(r.seg ? { seg: r.seg } : {}) })).filter(r => r.en);
+    if (!rows.length) return toast('英文が1つもありません');
+    const fields = { title: d.title.trim() || '無題', date: d.date, url: d.url.trim(), sentences: rows };
+    let L = d.id && Store.get(d.id);
+    if (L) Object.assign(L, fields);
+    else { L = { id: uid(), createdAt: Date.now(), history: [], ...fields }; Store.lessons.push(L); }
+    const split = await autoSplitIfNeeded(L);
+    await Store.save();
+    view = { name: 'lesson', id: L.id }; render();
+    toast(split ? '保存しました。音声も文ごとに自動で区切りました(「番組音声」で確認できます)' : '保存しました');
+  },
+  async del() {
+    const L = Store.get(view.id);
+    if (!confirm(`「${L.title}」を削除しますか？`)) return;
+    Store.lessons = Store.lessons.filter(x => x !== L);
+    if (L.audio) await removeAudio(L);
+    await Store.save();
+    view = { name: 'home' }; render();
+  },
+  hideEn(el) { view.hideEn = el.checked; render(); },
+  hideJa(el) { view.hideJa = el.checked; render(); },
+  play(el) { quickPlay(+el.dataset.i, false); },
+  slow(el) { quickPlay(+el.dataset.i, true); },
+  course() { startTraining(view.id, courseItems()); },
+  step(el) { startTraining(view.id, [{ id: el.dataset.step, n: 1 }]); },
+  restart() { const items = R.items, id = R.lesson.id; R = null; startTraining(id, items); },
+  stop() {
+    if (R && !R.done) return interrupt('stop');
+    const id = R?.lesson.id || view.id; R = null; view = { name: 'lesson', id }; render();
+  },
+  pause: togglePause,
+  prev() { interrupt('prev'); },
+  next() { interrupt('next'); },
+  replay() { interrupt('replay'); },
+  nextStep() { interrupt('nextStep'); },
+  peek() { if (R && !R.done) { R.peek = !R.peek; updatePlayer(); } },
+  // ---- 番組音声
+  segs() { openSegs(view.id); },
+  segsBack() {
+    if (view.dirty && !confirm('区切りの変更を保存せずに戻りますか？')) return;
+    stopEditorAudio(); view = { name: 'lesson', id: view.id }; render();
+  },
+  async segsSave() {
+    const L = Store.get(view.id), r3 = x => Math.round(x * 1000) / 1000;
+    if (!hasAudio(L)) { view = { name: 'lesson', id: L.id }; return render(); }
+    L.sentences.forEach((s, i) => { const g = view.segs[i]; if (g) s.seg = { s: r3(g.s), e: r3(g.e) }; else delete s.seg; });
+    await Store.save();
+    stopEditorAudio(); view = { name: 'lesson', id: L.id }; render(); toast('保存しました');
+  },
+  async audioDel() {
+    const L = Store.get(view.id);
+    if (!confirm('このレッスンの音声と区切りを削除しますか？')) return;
+    stopEditorAudio();
+    await removeAudio(L);
+    await Store.save();
+    openSegs(L.id);
+  },
+  playPause() {
+    unlock();
+    if (audioEl.paused) { finishSpeech?.(false); audioEl.playbackRate = 1; audioEl.play().catch(() => {}); }
+    else audioEl.pause();
+  },
+  seek(el) { audioEl.currentTime = Math.max(0, audioEl.currentTime + parseFloat(el.dataset.d)); },
+  wavSeek(el, e) {
+    const L = Store.get(view.id), r = el.getBoundingClientRect(), f = (e.clientX - r.left) / r.width;
+    audioEl.currentTime = el.dataset.w === 'all' ? f * audioDur(L) : zoomWin[0] + f * (zoomWin[1] - zoomWin[0]);
+  },
+  dlgMark(el) { view[el.dataset.k] = audioEl.currentTime; render(); },
+  autoSplit,
+  tapStart() {
+    view.tap = 0; unlock();
+    if (audioEl.paused) { finishSpeech?.(false); audioEl.playbackRate = 1; audioEl.play().catch(() => {}); }
+    render();
+  },
+  tapCancel() { view.tap = null; audioEl.pause(); render(); },
+  tap() {
+    const v = view, N = v.segs.length, t = Math.max(0, audioEl.currentTime - 0.2); // タップの反応の遅れを補正
+    if (v.tap == null) return;
+    if (v.tap < N) {
+      if (v.tap > 0) v.segs[v.tap - 1].e = Math.max(v.segs[v.tap - 1].s + 0.2, t);
+      v.segs[v.tap] = { s: t, e: t + 3 };
+      v.tap++;
+    } else {
+      v.segs[N - 1].e = Math.max(v.segs[N - 1].s + 0.2, t + 0.15);
+      v.tap = null; audioEl.pause(); snapAll();
+      toast('区切りました。▶ で確認して、ずれていたら微調整してください');
+    }
+    v.dirty = true; render();
+  },
+  segPlay(el) { const g = view.segs[+el.dataset.i]; if (g) { unlock(); playSeg(g, 1); } },
+  nudge(el) {
+    const g = view.segs[+el.dataset.i], k = el.dataset.k;
+    g[k] = Math.max(0, g[k] + parseFloat(el.dataset.d));
+    if (g.e <= g.s + 0.1) g[k === 's' ? 's' : 'e'] = k === 's' ? g.e - 0.1 : g.s + 0.1;
+    view.dirty = true; render(); unlock();
+    playSeg(k === 's' ? { s: g.s, e: Math.min(g.e, g.s + 1.5) } : { s: Math.max(g.s, g.e - 1.5), e: g.e }, 1);
+  },
+  segNow(el) {
+    const i = +el.dataset.i, k = el.dataset.k, t = audioEl.currentTime;
+    const g = view.segs[i] || (view.segs[i] = { s: t, e: t + 2 });
+    g[k] = t;
+    if (g.e <= g.s) { if (k === 's') g.e = g.s + 2; else g.s = Math.max(0, g.e - 2); }
+    view.dirty = true; render();
+  },
+  backup: exportBackup,
+  async doAssign() {
+    const v = view;
+    if (v.busy) return;
+    v.busy = true; render();
+    let n = 0, split = 0;
+    for (let i = 0; i < v.files.length; i++) {
+      const L = v.pairs[i] && Store.get(v.pairs[i]);
+      if (!L) continue;
+      toast(`音声を読み込んでいます… ${i + 1}/${v.files.length}`);
+      try { await attachAudio(L, v.files[i]); n++; if (await autoSplitIfNeeded(L)) split++; }
+      catch (e) { console.error(e); toast(`読み込めませんでした: ${v.files[i].name}`); await sleep(1200); }
+    }
+    await Store.save();
+    view = { name: 'home' }; render();
+    toast(`${n}件に音声を付け、${split}件を自動で区切りました。各レッスンの「番組音声」で確認できます`);
+  },
+  async clipImport() {
+    const target = view.name === 'lesson' ? Store.get(view.id) : null;
+    let text = '';
+    try { text = await navigator.clipboard.readText(); } catch {}
+    const clips = parseClips(text);
+    if (clips.length > 1) return importBundle(clips);
+    const c = clips[0];
+    const rows = parseScript(c.raw);
+    const base = target
+      ? { id: target.id, title: target.title, date: target.date || '', url: target.url || '' }
+      : { title: '', date: today(), url: '' };
+    view = { name: 'edit', id: target?.id, draft: { ...base, title: c.title && !target?.sentences.length && !hasAudio(target) ? c.title : base.title || c.title,
+      url: c.url || base.url, raw: c.raw, rows: rows.length ? rows : target ? target.sentences.map(s => ({ ...s })) : [] } };
+    render();
+    toast(!text ? 'クリップボードを読めませんでした。下の欄に貼り付けてください'
+      : !rows.length ? '英文が見つかりませんでした。貼り付けた内容を確認してください'
+      : hasDialogue(c.raw) ? `DIALOGUE から${rows.length}文を取り出しました。確認して保存してください`
+      : `⚠ DIALOGUE の見出しが見つからないため、ページ全体から${rows.length}文を取り出しました。不要な行を消してください`);
+  },
+  async pasteRaw() {
+    try {
+      const c = parseClip(await navigator.clipboard.readText());
+      const d = view.draft;
+      d.raw = c.raw; if (c.url) d.url = c.url; if (c.title && !d.title) d.title = c.title;
+      d.rows = parseScript(d.raw); render();
+      toast(d.rows.length ? `${d.rows.length}文を取り出しました` : '英文が見つかりませんでした');
+    } catch { toast('クリップボードを読めませんでした。欄を長押しして「ペースト」してください'); }
+  },
+  async copyBookmarklet() {
+    try { await navigator.clipboard.writeText(BOOKMARKLET); toast('コピーしました。ブックマークのアドレスに貼り付けてください'); }
+    catch { prompt('このコードを全部コピーしてください', BOOKMARKLET); }
+  },
+  testVoice() {
+    speechSynthesis.cancel(); unlock();
+    setTimeout(async () => {
+      await speakOnce("Hi! Let's practice shadowing together.", enPrimary(), 'en-US', S.rate);
+      await speakOnce("Sounds great. I'm ready.", enSecondary(), 'en-US', S.rate);
+      await speakOnce('一緒に練習しましょう。', jaVoice(), 'ja-JP', 1.05);
+    }, 50);
+  },
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el && ACTS[el.dataset.act]) ACTS[el.dataset.act](el, e);
+});
+
+function onInput(e) {
+  const el = e.target;
+  if (el.dataset.file === 'upload') { if (e.type === 'change') uploadAudio(el.files[0]); return; }
+  if (el.dataset.file === 'assign') { if (e.type === 'change' && el.files.length) startAssign(el.files); return; }
+  if (el.dataset.assign !== undefined && view.name === 'assign') { view.pairs[+el.dataset.assign] = el.value; return; }
+  if (el.dataset.file === 'batch') { if (e.type === 'change' && el.files.length) batchCreate(el.files); return; }
+  if (el.dataset.file === 'restore') { if (e.type === 'change' && el.files[0]) restoreBackup(el.files[0]); return; }
+  if (el.dataset.f && view.draft) { view.draft[el.dataset.f] = el.value; return; }
+  if (el.dataset.r && view.draft) { view.draft.rows[+el.closest('.erow').dataset.i][el.dataset.r] = el.value; return; }
+  if (el.dataset.s) {
+    const k = el.dataset.s;
+    S[k] = el.type === 'checkbox' ? el.checked : el.dataset.num !== undefined ? parseFloat(el.value) : el.value;
+    const out = el.parentElement.querySelector('output');
+    if (out) out.textContent = /rate/i.test(k) ? S[k].toFixed(2) + '×' : S[k].toFixed(1) + '倍';
+    saveSettings(); return;
+  }
+  if (el.dataset.course) { S.course[el.dataset.course] = Math.max(0, Math.min(5, parseInt(el.value, 10) || 0)); saveSettings(); }
+}
+document.addEventListener('input', onInput);
+document.addEventListener('change', onInput);
+
+// Mac のキーボード操作: Space=一時停止 ←→=前後の文 ↓=もう一度 N=次のステップ Esc=終了
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,textarea,select')) return;
+  if (view.name === 'segs') { // 区切り画面: Space=タップ/再生 ←→=1秒移動(Shiftで5秒)
+    const d = e.shiftKey ? 5 : 1;
+    if (e.key === ' ') { e.preventDefault(); view.tap != null ? ACTS.tap() : ACTS.playPause(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); audioEl.currentTime = Math.max(0, audioEl.currentTime + (e.key === 'ArrowLeft' ? -d : d)); }
+    return;
+  }
+  if (view.name !== 'player' || !R) return;
+  const map = { ' ': 'pause', ArrowLeft: 'prev', ArrowRight: 'next', ArrowDown: 'replay', n: 'nextStep', Escape: 'stop' };
+  const act = map[e.key];
+  if (act) { e.preventDefault(); ACTS[act](); }
+});
+
+// ================================================================ まとめて取り込み・音声の割り当て
+async function importBundle(clips) {
+  let made = 0, updated = 0, skipped = 0, withJa = 0;
+  for (const c of clips) {
+    const rows = parseScript(c.raw);
+    if (!rows.length) { skipped++; continue; }
+    if (rows.some(r => r.ja)) withJa++;
+    let L = c.url && Store.lessons.find(x => x.url === c.url);
+    if (L) { // 同じ記事を取り込み直したときは台本だけ更新(文の数が同じなら区切りも残す)
+      if (L.sentences.length === rows.length) rows.forEach((r, i) => { if (L.sentences[i].seg) r.seg = L.sentences[i].seg; });
+      L.sentences = rows; updated++;
+    } else {
+      L = { id: uid(), title: c.title || '無題', date: dateFromTitle(c.title), url: c.url, createdAt: Date.now() + made, history: [], sentences: rows };
+      Store.lessons.push(L); made++;
+    }
+    await autoSplitIfNeeded(L);
+  }
+  await Store.save();
+  view = { name: 'home' }; render();
+  toast(`${made}件を作成${updated ? `・${updated}件を更新` : ''}(訳あり ${withJa}件)${skipped ? `。英文が見つからない記事 ${skipped}件` : ''}。次に「音声をまとめて割り当て」で音声を付けてください`);
+}
+
+// 選んだ音声ファイルを、音声のないレッスンに日付の古い順で割り当てる(確認画面で変更できる)
+const byDate = (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.createdAt || 0) - (b.createdAt || 0); // 日付のないものは最後
+function startAssign(files) {
+  files = [...files].sort((a, b) => a.name.localeCompare(b.name, 'ja', { numeric: true }));
+  const targets = Store.lessons.filter(l => l.sentences.length && !hasAudio(l) && l.id !== 'sample').sort(byDate);
+  view = { name: 'assign', files, pairs: files.map((f, i) => targets[i]?.id || ''), busy: false };
+  render();
+}
+function vAssign() {
+  const v = view, opts = Store.lessons.filter(l => l.sentences.length).sort(byDate);
+  return bar('<button class="icon" data-act="home">‹ 戻る</button>', '音声を割り当て') + `
+  <main class="wrap">
+    <p class="hint">選んだ ${v.files.length}個の音声を、音声がまだないレッスンへ日付の古い順に割り当てました。違っていれば選び直してから「割り当てる」を押してください。割り当てると文ごとに自動で区切ります。</p>
+    ${v.files.map((f, i) => `<div class="card"><div class="lt">🔊 ${esc(f.name)}</div>
+      <select data-assign="${i}"><option value="">(割り当てない)</option>${opts.map(l => `<option value="${esc(l.id)}" ${v.pairs[i] === l.id ? 'selected' : ''}>${esc(l.title)}${hasAudio(l) ? '(音声あり・置き換え)' : ''}</option>`).join('')}</select></div>`).join('')}
+    <button class="primary block" data-act="doAssign" ${v.busy ? 'disabled' : ''}>${v.busy ? '割り当てています…' : '割り当てる'}</button>
+  </main>`;
+}
+
+// ================================================================ bookmarklet
+// 書き起こしページの本文をコピーするだけの小さなコード(取り出し方はアプリ側の parseScript で決める)
+const BOOKMARKLET = 'javascript:' + encodeURIComponent(`(()=>{
+const HEAD='${CLIP_HEAD}';
+const one=(t,u,x)=>'タイトル: '+String(t).replace(/\\n/g,' ')+'\\nURL: '+u+'\\n---\\n'+x;
+const toText=h=>{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('br').forEach(b=>b.replaceWith('\\n'));d.querySelectorAll('p,h1,h2,h3,h4,li,figure,blockquote,pre').forEach(p=>p.append('\\n'));return d.body.textContent;};
+const el=document.querySelector('.note-common-styles__textnote-body,[class*="entry-content"],[class*="post-content"],[class*="article-body"],[class*="entry-body"],article,main')||document.body;
+let txt=HEAD+'\\n'+one(document.title,location.href,el.innerText);
+const mk=(tag,text,css)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(css)e.style.cssText=css;return e;};
+const F='-apple-system,sans-serif';
+const box=mk('div','','position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;background:#fff;color:#111;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);padding:14px;font:15px/1.5 '+F+';max-height:80vh;overflow:auto');
+const copy=mk('button','このページをコピー','display:block;width:100%;margin:10px 0 0;padding:12px;border:0;border-radius:10px;background:#2f6fde;color:#fff;font:600 16px '+F);
+const msg=mk('div','','font-size:13px;color:#555;margin-top:6px');
+const ta=mk('textarea','','display:none;width:100%;height:90px;margin-top:8px');
+copy.onclick=async()=>{try{await navigator.clipboard.writeText(txt);copy.textContent='コピーしました → アプリで「クリップボードから取り込む」';}catch(e){ta.value=txt;ta.style.display='block';ta.focus();ta.select();copy.textContent='下の文字を全選択してコピーしてください';}};
+box.append(mk('div','Shadowing Coach に送る','font-weight:700'),copy);
+const creator=location.hostname==='note.com'&&location.pathname.split('/')[1];
+if(creator){
+const IN='width:100%;margin-top:6px;padding:8px;font-size:16px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box';
+const from=mk('input','',IN);from.type='date';const to=mk('input','',IN);to.type='date';
+const kw=mk('input','',IN);kw.value='ラジオ英会話';
+const go=mk('button','この人の記事を期間でまとめて取得','display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #2f6fde;border-radius:10px;background:#fff;color:#2f6fde;font:600 15px '+F);
+go.onclick=async()=>{
+if(!from.value||!to.value){msg.textContent='開始日と終了日を選んでください';return;}
+go.disabled=true;const list=[];let olderPages=0;
+try{
+for(let p=1;p<=200;p++){
+const j=await(await fetch('/api/v2/creators/'+creator+'/contents?kind=note&page='+p)).json();
+const c=(j.data&&j.data.contents)||[];let older=false;
+for(const n of c){const m=(n.name||'').match(/(\\d{4})年(\\d{1,2})月(\\d{1,2})日/);const d=m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):String(n.publishAt||'').slice(0,10);
+if(d<from.value)older=true;
+if(d>=from.value&&d<=to.value&&(!kw.value||(n.name||'').includes(kw.value)))list.push({key:n.key,name:n.name,d:d});}
+msg.textContent='記事を探しています… '+p+'ページ目('+list.length+'件)';
+if(older&&++olderPages>=2)break;
+if(!c.length||(j.data&&j.data.isLastPage))break;}
+list.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+const parts=[];
+for(let i=0;i<list.length;i++){msg.textContent='本文を取得しています… '+(i+1)+'/'+list.length;
+const j=await(await fetch('/api/v3/notes/'+list[i].key)).json();
+parts.push(one(list[i].name,'https://note.com/'+creator+'/n/'+list[i].key,toText((j.data&&j.data.body)||'')));
+await new Promise(r=>setTimeout(r,300));}
+if(!parts.length){msg.textContent='該当する記事がありませんでした';go.disabled=false;return;}
+txt=HEAD+'まとめ\\n'+parts.join('\\n=====\\n');
+msg.textContent=parts.length+'件の記事を取得しました。上のボタンでコピーしてください';
+copy.textContent='まとめてコピー('+parts.length+'件)';
+}catch(e){msg.textContent='取得できませんでした: '+e.message;go.disabled=false;}};
+box.append(mk('div','期間でまとめて取得(note)','font-weight:600;margin-top:12px'),mk('div','開始日','font-size:12px;color:#555;margin-top:6px'),from,mk('div','終了日','font-size:12px;color:#555;margin-top:6px'),to,mk('div','タイトルに含む文字','font-size:12px;color:#555;margin-top:6px'),kw,go);}
+const x=mk('button','閉じる','display:block;width:100%;margin-top:6px;padding:8px;border:0;background:none;color:#2f6fde;font:15px '+F);
+x.onclick=()=>box.remove();
+box.append(msg,ta,x);document.body.append(box);
+})()`.replace(/\n/g, ''));
+
+// ================================================================ backup
+async function exportBackup() {
+  const name = `shadowing-backup-${today()}.json`;
+  const blob = new Blob([JSON.stringify({ app: 'shadowing-coach', version: 1, exportedAt: new Date().toISOString(), lessons: Store.lessons }, null, 1)], { type: 'application/json' });
+  const file = new File([blob], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) { // iPhone: 共有シートから「ファイルに保存」など
+    try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function restoreBackup(file) {
+  let lessons;
+  try { const data = JSON.parse(await file.text()); lessons = Array.isArray(data) ? data : data.lessons; } catch {}
+  if (!Array.isArray(lessons)) return toast('バックアップファイルを読み込めませんでした');
+  if (!confirm(`${lessons.length}件のレッスンを復元します。同じレッスンは上書きされます。よろしいですか？`)) return;
+  for (const L of lessons) {
+    if (!L?.id || !Array.isArray(L.sentences)) continue;
+    if (L.audio) { if (await idb.get('audio:' + L.id).catch(() => null)) delete L.audio.missing; else L.audio.missing = true; }
+    const i = Store.lessons.findIndex(x => x.id === L.id);
+    if (i >= 0) Store.lessons[i] = L; else Store.lessons.push(L);
+  }
+  await Store.save();
+  view = { name: 'home' }; render(); toast('復元しました');
+}
+
+(async () => {
+  await Store.load();
+  render();
+  // オフラインでも開けるようにする(https か localhost のときだけ動く)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
