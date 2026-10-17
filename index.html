@@ -10,8 +10,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Shadowing Coach</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--line:#e3e1da;--accent:#2f6fde;--accent-ink:#fff;--ja:#55555c;--hl:#fff1c2;--ok:#23955a;--danger:#d14343}
-@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1f1f23;--ink:#f2f2f4;--sub:#9a9aa2;--line:#2f2f35;--accent:#5b8ff0;--accent-ink:#fff;--ja:#b4b4bc;--hl:#3d3620;--ok:#4cc27e;--danger:#ef6b6b}}
+:root{--on-ok:#fff;--bg:#f6f5f1;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--line:#e3e1da;--accent:#2f6fde;--accent-ink:#fff;--ja:#55555c;--hl:#fff1c2;--ok:#23955a;--danger:#d14343}
+@media (prefers-color-scheme:dark){:root{--on-ok:#0d2016;--bg:#141416;--card:#1f1f23;--ink:#f2f2f4;--sub:#9a9aa2;--line:#2f2f35;--accent:#5b8ff0;--accent-ink:#fff;--ja:#b4b4bc;--hl:#3d3620;--ok:#4cc27e;--danger:#ef6b6b}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -28,7 +28,6 @@ button:disabled{opacity:.5}
 .bar .side{min-width:64px;display:flex}
 .bar .side.r{justify-content:flex-end}
 .icon{border:none;background:none;padding:8px 10px;min-width:44px;font-size:17px;color:var(--accent)}
-.cnt{font-size:13px;color:var(--sub);padding-right:8px}
 .wrap{max-width:720px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom) + 40px);display:flex;flex-direction:column;gap:14px}
 h2{margin:0;font-size:15px}
 h2 small{font-weight:400;color:var(--sub)}
@@ -37,18 +36,6 @@ h2 small{font-weight:400;color:var(--sub)}
 .lt{font-weight:600}
 .lm{font-size:13px;color:var(--sub)}
 .empty,.note{color:var(--sub);font-size:14px;text-align:center}
-.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.step{text-align:left;display:flex;flex-direction:column;gap:2px;padding:12px}
-.step b{font-size:15px}
-.step span{font-size:12px;color:var(--sub);line-height:1.4}
-.listhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px}
-.toggles{display:flex;gap:12px;font-size:13px;color:var(--sub)}
-.toggles label{display:flex;align-items:center;gap:4px}
-.sents{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
-.sents li{display:flex;gap:6px}
-.sent{flex:1;text-align:left;display:flex;flex-direction:column;gap:2px;transition:background .2s}
-.sent.playing{background:var(--hl)}
-.slow{flex:none;width:48px;padding:0;font-size:18px}
 .spk{font-size:12px;color:var(--accent);font-weight:600}
 .ja{color:var(--ja);font-size:14px}
 .hid{filter:blur(7px);user-select:none;-webkit-user-select:none}
@@ -72,30 +59,6 @@ textarea{resize:vertical;line-height:1.45}
 .sm{padding:6px 10px;font-size:13px}
 .lan{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--ink);word-break:break-all}
 /* player */
-.player{min-height:100dvh;display:flex;flex-direction:column}
-.pills{display:flex;gap:4px;padding:10px 16px;overflow-x:auto;max-width:720px;width:100%;margin:0 auto}
-.pill{font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--sub);white-space:nowrap}
-.pill.done{opacity:.45}
-.pill.cur{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-.stage{flex:1;max-width:720px;width:100%;margin:0 auto;padding:6px 16px;display:flex;flex-direction:column;gap:10px}
-.stepname{font-size:22px;font-weight:700}
-.stepname small{font-size:14px;font-weight:400;color:var(--sub)}
-.stepdesc{color:var(--sub);font-size:14px;margin-top:-6px}
-.sentcard{text-align:left;padding:20px;min-height:190px}
-.sentcard .en{font-size:22px;line-height:1.45;font-weight:500}
-.sentcard .ja{font-size:16px}
-.num{font-size:12px;color:var(--sub)}
-.peekhint{font-size:11px;color:var(--sub)}
-.turn{height:26px;text-align:center;font-weight:700;color:var(--ok)}
-.meter{height:6px;background:var(--line);border-radius:99px;overflow:hidden}
-#bar{height:100%;width:0;background:var(--ok)}
-.controls{display:flex;justify-content:center;align-items:center;gap:12px;padding:16px}
-.controls button{width:54px;height:54px;border-radius:50%;padding:0;font-size:19px}
-.controls .primary{width:72px;height:72px;font-size:26px}
-.nextstep{max-width:688px;width:calc(100% - 32px);margin:0 auto calc(env(safe-area-inset-bottom) + 16px)}
-.done{align-items:center;justify-content:center;text-align:center;gap:14px}
-.done .em{font-size:56px}
-.done p{color:var(--sub);margin:0}
 .audiocard{text-align:left;display:flex;flex-direction:column;gap:2px;padding:12px 14px}
 .audiocard span{font-size:12px;color:var(--sub)}
 .filebtn.block{display:block}
@@ -118,7 +81,136 @@ textarea{resize:vertical;line-height:1.45}
 .srow-c .tm{font-variant-numeric:tabular-nums;min-width:112px;color:var(--ink)}
 .srow.none .tm{color:var(--danger)}
 .srow-c .lbl{margin-left:6px}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
+.tq{display:flex;gap:8px;align-items:center;text-align:left;font-size:14px;padding:8px 10px}
+.tq span:nth-child(2){flex:1}
+.tq small{color:var(--sub);font-size:11px}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;flex:none;font-weight:600}
+.tag.review{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.tag.new{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.mem{height:4px;border-radius:99px;background:var(--line);margin-top:8px;overflow:hidden}
+.mem i{display:block;height:100%}
+.mem i.hi{background:var(--ok)}
+.mem i.mid{background:#d9a21b}
+.mem i.lo{background:var(--danger)}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:420px}
+.rate button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:26px;padding:12px 4px}
+.rate b{font-size:14px}
+.rate small{font-size:11px;color:var(--sub)}
+.srsline{margin-bottom:-4px}
+/* home: 今日やること */
+.today-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.today-h h2{font-size:18px}
+.mini{font-size:13px;color:var(--sub);border:0;background:none;padding:4px 0}
+.goalbar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:-4px}
+.goalbar i{display:block;height:100%;background:var(--ok)}
+.titem{display:flex;align-items:center;gap:10px;text-align:left;padding:12px}
+.titem .tt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.titem .tt b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titem .tt small{font-size:12px;color:var(--sub)}
+.chev{font-size:22px;color:var(--sub)}
+.empty small{font-size:12px}
+/* 学習画面 */
+.study-wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--line);padding:4px;border-radius:12px}
+.modes button{border:0;background:none;padding:9px 2px;font-size:14px;font-weight:600;color:var(--sub);border-radius:9px}
+.modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{padding:5px 14px;border-radius:99px;font-size:13px}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.slines{display:flex;flex-direction:column;gap:6px}
+.sline{text-align:left;display:flex;flex-direction:column;gap:3px;padding:12px 14px;transition:background .2s,border-color .2s}
+.sline.cur{background:var(--hl);border-color:var(--accent)}
+.sline .en{font-size:17px;line-height:1.45}
+.sline .ja{font-size:14px}
+.more{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.more button{display:flex;flex-direction:column;gap:2px;font-size:14px;font-weight:600}
+.more small{font-size:11px;font-weight:400;color:var(--sub)}
+.sbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 16px calc(env(safe-area-inset-bottom) + 10px)}
+.sprog{height:3px;max-width:688px;margin:0 auto 8px;background:var(--line);border-radius:99px;overflow:hidden}
+.sprog i{display:block;height:100%;width:0;background:var(--ok)}
+.sbar-row{max-width:688px;margin:0 auto;display:flex;gap:8px;align-items:center}
+.sbar-row button{min-width:52px;padding:12px 8px}
+.sbar-row .splay{flex:1;font-size:17px}
+.sbar-row button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+/* 記録画面 */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile b{display:block;font-size:22px;line-height:1.25}
+.tile span{font-size:12px;color:var(--sub)}
+.calnav{display:flex;align-items:center;justify-content:space-between}
+.calnav h2{font-size:17px}
+.cal-h,.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-h span{font-size:11px;color:var(--sub);text-align:center}
+.cal{position:relative;aspect-ratio:1;border-radius:8px;padding:2px;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--line);font-size:13px;line-height:1.15;color:var(--ink)}
+.cal small{font-size:9px;opacity:.85}
+.cal em{position:absolute;top:2px;right:4px;font-size:9px;font-style:normal}
+.cal.l1{background:color-mix(in srgb,var(--ok) 28%,var(--card))}
+.cal.l2{background:color-mix(in srgb,var(--ok) 58%,var(--card))}
+.cal.l3{background:var(--ok);color:var(--on-ok)}
+.cal.lf{background:transparent;color:var(--sub);opacity:.45}
+.cal.t{outline:2px solid var(--accent);outline-offset:1px}
+.cal.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.legend-row{display:flex;gap:4px;align-items:center;justify-content:flex-end;font-size:11px;color:var(--sub)}
+.legend-row i.cal{width:14px;height:14px;border-radius:3px;aspect-ratio:auto;padding:0}
+.chartbox{position:relative}
+.chartbox svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.c-grid{stroke:var(--line);stroke-width:1}
+.c-lab{fill:var(--sub);font-size:12px}
+.c-area{fill:var(--accent);opacity:.16}
+.c-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.c-x{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3}
+.c-dot{fill:var(--accent);stroke:var(--card);stroke-width:2}
+.ctip{position:absolute;top:-6px;transform:translate(-50%,-100%);display:none;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.4;padding:5px 9px;border-radius:7px;width:max-content;max-width:100%;box-sizing:border-box}
+.notice{background:color-mix(in srgb,#d9a21b 14%,var(--card));border:1px solid color-mix(in srgb,#d9a21b 45%,var(--line));border-radius:12px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:8px}
+.notice button{align-self:flex-start;padding:6px 12px;font-size:13px}
+.brow{display:grid;grid-template-columns:minmax(0,9em) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.blab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blab.link{border:0;background:none;padding:0;text-align:left;color:var(--accent);font-size:13px;display:flex;flex-direction:column}
+.blab.link small{color:var(--sub);font-size:11px}
+.btrack{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.btrack i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.bval{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.bval small{display:block;font-size:10px;color:var(--sub)}
+.modes.mini2{grid-template-columns:1fr 1fr;max-width:240px}
+.c-bar{fill:var(--accent)}
+.c-goal{stroke:var(--ok);stroke-width:1.5;stroke-dasharray:4 4}
+.c-hl{fill:var(--ink);opacity:.06}
+.adv>*+*{margin-top:10px}
+.adv summary{cursor:pointer;color:var(--accent);font-size:14px;padding:4px 0}
+.adv[open] summary{margin-bottom:8px}
+.flow-item{display:flex;align-items:center;gap:10px;text-align:left;padding:12px}
+.flow-item span:first-child{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.flow-item small{font-size:12px;color:var(--sub)}
+.fsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.fstep{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:6px 8px}
+.fstep.dragging{opacity:.85;box-shadow:0 6px 18px rgba(0,0,0,.25);border-color:var(--accent)}
+.grip{touch-action:none;cursor:grab;font-size:20px;color:var(--sub);padding:6px 4px;user-select:none;-webkit-user-select:none}
+.fname{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.fctl{display:flex;align-items:center;gap:6px}
+.fctl>button{padding:4px 10px;font-size:13px;border-radius:8px}
+.fname b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.fname small{font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stepper{display:flex;align-items:center;gap:2px}
+.stepper b{min-width:2em;text-align:center;font-size:14px}
+.stepper button,.fx{padding:4px 8px;font-size:14px;border-radius:8px}
+.fx{color:var(--danger)}
+.addsteps{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.addsteps button{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px}
+.addsteps b{font-size:13px}
+.addsteps small{font-size:11px;color:var(--sub);line-height:1.35}
+.flowbar{display:flex;flex-direction:column;gap:8px}
+.steppills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.steppills::-webkit-scrollbar{display:none}
+.pill{flex:none;font-size:13px;padding:6px 12px;border-radius:99px;white-space:nowrap}
+.pill.cur{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.flowmeta{display:flex;gap:6px;align-items:center}
+.flowmeta select{flex:1;padding:6px 10px;font-size:14px}
+.sheet-bg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.4)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:10px;max-width:720px;margin:0 auto;box-shadow:0 -8px 30px rgba(0,0,0,.25);animation:up .2s ease-out}
+.sheet h2{font-size:18px}
+.sheet .rate{max-width:none}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
@@ -142,13 +234,34 @@ function toast(msg) {
 const DEFAULTS = {
   rate: 0.95, audioRate: 1.0, enVoice: '', enVoice2: '', jaVoice: '',
   repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true,
-  course: { listen: 1, read: 1, overlap: 1, shadow: 2, repeat: 1, jaen: 1 },
+  goalMin: 15, newPerDay: 1,
+  // 練習の流れ(型)。steps は順番どおりのステップと回数
+  flows: [
+    { id: 'full', name: 'じっくり(フルコース)', steps: [{ id: 'listen', n: 1 }, { id: 'read', n: 1 }, { id: 'overlap', n: 1 }, { id: 'shadow', n: 2 }, { id: 'repeat', n: 1 }, { id: 'jaen', n: 1 }] },
+    { id: 'review', name: 'さっと復習', steps: [{ id: 'overlap', n: 1 }, { id: 'shadow', n: 1 }, { id: 'jaen', n: 1 }] },
+    { id: 'shadow', name: 'シャドーイング集中', steps: [{ id: 'listen', n: 1 }, { id: 'shadow', n: 3 }] },
+  ],
+  flowNew: 'full', flowReview: 'review', // 新しいレッスン / 復習で使う型
 };
 let S = loadSettings();
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem('sc.settings') || '{}');
-    return { ...DEFAULTS, ...s, course: { ...DEFAULTS.course, ...(s.course || {}) } };
+    if (!s.flows && (s.course || s.review)) { // 以前の「フルコース」「復習コース」の回数設定を型に移す
+      const order = ['listen', 'read', 'overlap', 'shadow', 'repeat', 'jaen'];
+      const toSteps = c => order.filter(id => c?.[id] > 0).map(id => ({ id, n: c[id] }));
+      s.flows = structuredClone(DEFAULTS.flows);
+      if (s.course) s.flows[0].steps = toSteps(s.course);
+      if (s.review) s.flows[1].steps = toSteps(s.review);
+    }
+    delete s.course; delete s.review;
+    for (const f of s.flows || []) { // ['shadow', 'shadow'] の形(前の版)を [{ id, n }] にまとめる
+      if (!f.steps.some(st => typeof st === 'string')) continue;
+      const out = [];
+      for (const id of f.steps) { const last = out.at(-1); if (last?.id === id) last.n++; else out.push({ id, n: 1 }); }
+      f.steps = out;
+    }
+    return { ...structuredClone(DEFAULTS), ...s };
   } catch { return structuredClone(DEFAULTS); }
 }
 function saveSettings() { try { localStorage.setItem('sc.settings', JSON.stringify(S)); } catch {} }
@@ -177,31 +290,13 @@ const idb = {
   del(k) { return this.tx('readwrite', s => s.delete(k)); },
 };
 
-const SAMPLE = {
-  id: 'sample', title: 'サンプル: カフェで', date: '', url: '', createdAt: 0, history: [],
-  sentences: [
-    { speaker: 'Emma', en: "Hi Ken! I didn't expect to see you here.", ja: 'ケン、こんにちは！ここで会うとは思わなかった。' },
-    { speaker: 'Ken', en: 'Hey, Emma. I come here every morning before work.', ja: 'やあ、エマ。仕事の前に毎朝ここに来るんだ。' },
-    { speaker: 'Emma', en: 'Really? What do you usually get?', ja: '本当？いつも何を頼むの？' },
-    { speaker: 'Ken', en: 'A large latte. It keeps me going until lunch.', ja: 'ラテのLサイズ。それでお昼までもつんだ。' },
-    { speaker: 'Emma', en: "Maybe I should try that. I've been so sleepy lately.", ja: '私も試してみようかな。最近すごく眠くて。' },
-    { speaker: 'Ken', en: "Let me get you one. It's my treat.", ja: '1杯買ってあげるよ。僕のおごり。' },
-  ],
-};
-
 const Store = {
-  lessons: [], server: false, ok: true,
+  lessons: [], ok: true,
   async load() {
-    // Mac の server.py から開いているときだけ、URL取得が使える
-    try { const r = await fetch('api/info', { cache: 'no-store' }); this.server = r.ok && (r.headers.get('content-type') || '').includes('json'); } catch {}
     try {
-      const saved = await idb.get('lessons');
-      if (saved) this.lessons = saved;
-      else this.lessons = (this.server && await migrateFromServer()) || [structuredClone(SAMPLE)];
+      this.lessons = (await idb.get('lessons') || []).filter(l => l.id !== 'sample'); // 初期のサンプルは片付ける
       navigator.storage?.persist?.().catch(() => {});
-    } catch (e) {
-      console.error(e); this.ok = false; this.lessons = [structuredClone(SAMPLE)];
-    }
+    } catch (e) { console.error(e); this.ok = false; }
   },
   async save() {
     try { await idb.set('lessons', this.lessons); }
@@ -210,22 +305,63 @@ const Store = {
   get(id) { return this.lessons.find(l => l.id === id); },
 };
 
-// 以前の版(Mac のサーバーに保存)のデータを、この端末に移す
-async function migrateFromServer() {
-  try {
-    const lessons = await (await fetch('api/lessons')).json();
-    if (!Array.isArray(lessons) || !lessons.length) return null;
-    for (const L of lessons) {
-      if (!L.audio?.file) continue;
-      const blob = await (await fetch(`api/audio/${L.audio.file}`)).blob();
-      const env = await fetch(`api/audio/${L.id}.env.json`).then(r => (r.ok ? r.json() : null)).catch(() => null);
-      await idb.set('audio:' + L.id, { blob, name: L.audio.name || L.audio.file });
-      if (env) await idb.set('env:' + L.id, env);
-      L.audio = { name: L.audio.name || L.audio.file, duration: L.audio.duration, v: Date.now() };
-    }
-    await idb.set('lessons', lessons);
-    return lessons;
-  } catch { return null; }
+// ================================================================ 続ける記録と復習スケジュール(忘却曲線)
+const INTERVALS = [1, 3, 7, 14, 30, 60, 120]; // 復習の間隔(日)。エビングハウスの忘却曲線に沿って間隔を広げる
+const addDays = (d, n) => { const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + n); return t.toLocaleDateString('sv-SE'); };
+const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+
+const Stats = {
+  days: {}, // 'YYYY-MM-DD' → { sec: 練習した秒数, runs: 最後までやった回数 }
+  async load() { try { this.days = (await idb.get('stats'))?.days || {}; } catch {} },
+  save() { return idb.set('stats', { days: this.days }).catch(() => {}); },
+  // info.modes: { 項目: 秒 }(リスニング・シャドーイングなど) / info.lesson: レッスンID。今日の目標をちょうど達成したら true
+  add(sec, completed, info = {}) {
+    const d = today(), rec = this.days[d] || (this.days[d] = { sec: 0, runs: 0 });
+    const before = rec.sec, goal = S.goalMin * 60;
+    rec.sec += Math.round(sec);
+    if (completed) rec.runs++;
+    for (const [k, v] of Object.entries(info.modes || {})) if (v >= 1) { rec.modes ||= {}; rec.modes[k] = (rec.modes[k] || 0) + Math.round(v); }
+    if (info.lesson && sec >= 1) { rec.lessons ||= {}; rec.lessons[info.lesson] = (rec.lessons[info.lesson] || 0) + Math.round(sec); }
+    this.save();
+    return before < goal && rec.sec >= goal;
+  },
+  streak() { // 練習した日の連続日数。今日がまだでも、昨日まで続いていれば途切れない
+    let d = today(), n = 0;
+    if (!this.days[d]?.runs) d = addDays(d, -1);
+    while (this.days[d]?.runs) { n++; d = addDays(d, -1); }
+    return n;
+  },
+  todaySec() { return this.days[today()]?.sec || 0; },
+};
+
+// 練習後の自己評価で次の復習日を決める: again=明日からやり直し / ok=同じ間隔 / good=次の間隔へ
+// 練習を終えるたびに次の間隔へ進む(初回は1日後)。「難しかった」なら明日からやり直し
+const nextStage = (L, grade) => grade === 'again' ? 0 : Math.min(L.srs ? L.srs.stage + 1 : 0, INTERVALS.length - 1);
+function rateLesson(L, grade) {
+  const srs = L.srs || { stage: -1, reps: 0, lapses: 0, first: today() };
+  if (grade === 'again' && srs.reps) srs.lapses++;
+  srs.stage = nextStage(L, grade);
+  srs.reps++; srs.last = today();
+  (L.rates ||= []).push({ d: today(), g: grade }); // 記録画面で「その日に学習したレッスン」を出すため
+  srs.due = addDays(srs.last, INTERVALS[srs.stage]);
+  L.srs = srs;
+}
+// 記憶の目安(%): 前回からの経過日数を間隔と比べ、指数関数の忘却曲線で見積もる。復習日ちょうどで約80%
+function retention(L) {
+  if (!L.srs?.last) return null;
+  return Math.round(100 * Math.exp(Math.log(0.8) * daysBetween(L.srs.last, today()) / INTERVALS[L.srs.stage]));
+}
+const isDue = L => !!L.srs?.due && L.srs.due <= today();
+function fmtDue(d) {
+  const n = daysBetween(today(), d);
+  return n < 0 ? `${-n}日遅れ` : n === 0 ? '今日' : n === 1 ? '明日' : `${+d.slice(5, 7)}/${+d.slice(8)}(あと${n}日)`;
+}
+function todayPlan() {
+  const ls = Store.lessons.filter(l => l.sentences.length);
+  const reviews = ls.filter(isDue).sort((a, b) => a.srs.due.localeCompare(b.srs.due));
+  const startedToday = ls.filter(l => l.srs?.first === today()).length;
+  const fresh = ls.filter(l => !l.srs).sort(byDate).slice(0, Math.max(0, S.newPerDay - startedToday));
+  return { reviews, fresh };
 }
 
 // ================================================================ script parser
@@ -432,6 +568,11 @@ async function loadAudioUrl(L) {
   audioUrls.set(L.id, u);
   return u;
 }
+async function ensureAudio(L) { // このレッスンの音声を再生できる状態にする。できなければ false(読み上げで代用)
+  if (!hasAudio(L)) return false;
+  if (!audioUrls.has(L.id)) await loadAudioUrl(L);
+  return prepareAudio(L);
+}
 function forgetAudioUrl(id) { const u = audioUrls.get(id); if (u) { URL.revokeObjectURL(u); audioUrls.delete(id); } }
 function prepareAudio(L) { // タップ操作の中から同期的に呼ぶ(iOS の再生制限のため)
   const u = hasAudio(L) && audioUrls.get(L.id);
@@ -538,153 +679,43 @@ async function keepAwake(on) {
   try { if (on) wakeLock = await navigator.wakeLock?.request('screen'); else { await wakeLock?.release(); wakeLock = null; } } catch {}
 }
 
-// ================================================================ training engine
-class Abort { constructor(kind) { this.kind = kind; } }
-let R = null; // 実行中のトレーニング
-
-function interrupt(kind) {
-  if (!R || R.done) return;
-  R.pending = kind; R.paused = false;
-  speechSynthesis.cancel(); finishSpeech?.(false);
-}
-function togglePause() {
-  if (!R || R.done) return;
-  R.paused = !R.paused;
-  if (R.paused) { speechSynthesis.cancel(); finishSpeech?.(false); }
-  updatePlayer();
-}
-function takePending() { if (R.pending) { const k = R.pending; R.pending = null; throw new Abort(k); } }
-async function gate() { while (R.paused && !R.pending) await sleep(100); takePending(); }
-
-async function play(start) {
-  for (;;) {
-    await gate();
-    await sleep(30);
-    const r = await start();
-    takePending();
-    if (R.paused) continue; // 一時停止された文は再開時に最初から
-    return r.ms;
-  }
-}
-const say = (text, voice, lang, rate) => play(() => speakOnce(text, voice, lang, rate));
-async function wait(ms, phase = '') {
-  if (phase) { R.phase = phase; updatePlayer(); }
-  let left = ms;
-  try {
-    while (left > 0) {
-      await sleep(50); takePending();
-      if (!R.paused) left -= 50;
-      if (phase) setBar(1 - left / ms);
-    }
-  } finally {
-    if (phase) { R.phase = ''; updatePlayer(); }
-  }
-}
-function setBar(f) { const b = $('#bar'); if (b) b.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%'; }
-
-// 区切り済みの番組音声があればそれを、なければ読み上げ音声を使う
-async function sayEn(s, i) {
-  const seg = segOf(R.lesson, s);
-  const ms = seg ? await play(() => playSeg(seg, S.audioRate)) : await say(s.en, voiceFor(R.lesson, s), 'en-US', S.rate);
-  R.dur[i] = ms;
-  return ms;
-}
-const est = (s, i) => {
-  const seg = segOf(R.lesson, s);
-  return R.dur[i] || (seg ? (seg.e - seg.s) * 1000 / S.audioRate : s.en.split(/\s+/).length * 400 / S.rate + 300);
-};
-
-async function eachSentence(fn) {
-  const list = R.lesson.sentences;
-  let i = 0;
-  while (i < list.length) {
-    R.idx = i; R.peek = false; R.revealEn = false; updatePlayer();
-    try { await fn(list[i], i); i++; }
-    catch (e) {
-      if (!(e instanceof Abort)) throw e;
-      if (e.kind === 'next') i++;
-      else if (e.kind === 'prev') i = Math.max(0, i - 1);
-      else if (e.kind !== 'replay') throw e;
-    }
-  }
-}
-
+// ================================================================ 練習のステップ(型を組み立てる部品)
+// en / ja: そのステップで英文・訳を最初に表示するか(null は設定に従う) / gap: 文と文の間(ms)
+// repeat: 1文ごとに言う時間をとる / jaen: 訳を見て言ってから正解を聞く
 const STEPS = [
-  { id: 'listen', short: '聞く', name: '通し聞き', desc: '英文を見ずに、まず全体を聞き取る',
-    show: () => ({ en: false, ja: false }),
-    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(500); }) },
-  { id: 'read', short: '見て聞く', name: '英文を見ながら聞く', desc: '英文と訳を確認しながら聞く',
-    show: () => ({ en: true, ja: true }),
-    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(900); }) },
-  { id: 'overlap', short: 'オーバーラップ', name: 'オーバーラッピング', desc: '英文を見ながら、音声とぴったり同時に声に出す',
-    show: () => ({ en: true, ja: false }),
-    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(800); }) },
-  { id: 'shadow', short: 'シャドー', name: 'シャドーイング', desc: '英文を見ずに、少し遅れて影のように追いかける',
-    show: () => ({ en: false, ja: false }),
-    run: () => eachSentence(async (s, i) => { await sayEn(s, i); await wait(800); }) },
-  { id: 'repeat', short: 'リピート', name: 'リピーティング', desc: '1文聞いたら、ビープ音のあとに同じように言う',
-    show: () => ({ en: S.repeatShowEn, ja: false }),
-    run: () => eachSentence(async (s, i) => { const ms = await sayEn(s, i); beep(); await wait(ms * S.repeatFactor + 600, 'turn'); }) },
-  { id: 'jaen', short: '日→英', name: '日→英 発話', desc: '日本語訳を見て英語で言う。そのあと正解を聞く',
-    show: () => ({ en: false, ja: true }),
-    run: () => eachSentence(async (s, i) => {
-      if (!s.ja.trim()) return;
-      if (S.jaSpeak) await say(s.ja, jaVoice(), 'ja-JP', 1.05); else await wait(600);
-      beep();
-      await wait(est(s, i) * S.jaenFactor + 1500, 'turn');
-      R.revealEn = true; updatePlayer();
-      await sayEn(s, i);
-      await wait(1200);
-    }) },
+  { id: 'listen', short: '聞く', name: '通し聞き', desc: '英文を見ずに、まず全体を聞き取る', en: false, ja: false, gap: 450 },
+  { id: 'read', short: '見て聞く', name: '英文を見ながら聞く', desc: '英文と訳を確認しながら聞く', en: true, ja: true, gap: 900 },
+  { id: 'overlap', short: 'オーバーラップ', name: 'オーバーラッピング', desc: '英文を見ながら、音声とぴったり同時に声に出す', en: true, ja: false, gap: 700 },
+  { id: 'shadow', short: 'シャドー', name: 'シャドーイング', desc: '英文を見ずに、少し遅れて影のように追いかける', en: false, ja: false, gap: 700 },
+  { id: 'repeat', short: 'リピート', name: 'リピーティング', desc: '1文聞いたら、ビープ音のあとに同じように言う', en: null, ja: false, repeat: true },
+  { id: 'jaen', short: '日→英', name: '日→英 発話', desc: '日本語訳を見て英語で言う。そのあと正解を聞く', en: false, ja: true, jaen: true },
 ];
-const courseItems = () => STEPS.filter(d => S.course[d.id] > 0).map(d => ({ id: d.id, n: S.course[d.id] }));
-
-async function startTraining(lessonId, items) {
-  const L = Store.get(lessonId);
-  if (!L || !L.sentences.length) return;
-  const plan = [];
-  for (const it of items) { const def = STEPS.find(d => d.id === it.id); for (let k = 1; k <= it.n; k++) plan.push({ def, rep: k, of: it.n }); }
-  if (!L.sentences.some(s => s.ja)) { // 和訳がないレッスンでは「日→英」を省く
-    for (let k = plan.length - 1; k >= 0; k--) if (plan[k].def.id === 'jaen') plan.splice(k, 1);
-    if (!plan.length) { toast('このレッスンには日本語訳がないため「日→英」は使えません(編集で訳を追加できます)'); return; }
-  }
-  if (!plan.length) { toast('フルコースのステップがすべて0回になっています(設定で変更できます)'); return; }
-
-  speechSynthesis.cancel(); prepareAudio(L); unlock();
-  const run = R = { lesson: L, items, plan, stepIdx: 0, idx: 0, paused: false, pending: null, dur: {},
-    show: { en: true, ja: true }, peek: false, revealEn: false, phase: '', done: false };
-  view = { name: 'player', id: lessonId }; render(); keepAwake(true);
-  try {
-    for (let k = 0; k < plan.length; k++) {
-      R.stepIdx = k; R.idx = 0; R.show = plan[k].def.show(); updatePlayer();
-      try {
-        try {
-          if (S.announce) await say(plan[k].def.name, jaVoice(), 'ja-JP', 1.05);
-          await wait(500);
-        } catch (e) { if (!(e instanceof Abort) || !['next', 'prev', 'replay'].includes(e.kind)) throw e; }
-        await plan[k].def.run();
-      } catch (e) { if (e instanceof Abort && e.kind === 'nextStep') continue; throw e; }
-    }
-    R.done = true;
-    L.history = [...(L.history || []), { at: Date.now(), steps: plan.map(p => p.def.id) }];
-    Store.save();
-    updatePlayer();
-  } catch (e) {
-    if (!(e instanceof Abort)) { console.error(e); toast('エラー: ' + e.message); }
-    if (R === run) { R = null; view = { name: 'lesson', id: lessonId }; render(); }
-  } finally { keepAwake(false); }
+const stepDef = id => STEPS.find(d => d.id === id) || STEPS[0];
+const flowOf = id => S.flows.find(f => f.id === id) || S.flows[0];
+const flowKey = L => (L.srs ? 'flowReview' : 'flowNew'); // そのレッスンで使う型の設定名
+// 型を練習エンジン用の [{ id, n }] にする(隣り合う同じステップは回数をまとめる)
+function flowItems(id) {
+  const out = [];
+  for (const st of flowOf(id)?.steps || []) { const last = out.at(-1); if (last?.id === st.id) last.n += st.n; else out.push({ id: st.id, n: st.n }); }
+  return out;
 }
+const stepName = id => STEPS.find(d => d.id === id)?.name || id;
+const flowSummary = id => (flowOf(id)?.steps || []).map(st => (STEPS.find(d => d.id === st.id)?.short || st.id) + (st.n > 1 ? '×' + st.n : '')).join(' → ') || '(ステップがありません)';
+const flowOptions = sel => S.flows.map(f => `<option value="${esc(f.id)}" ${f.id === sel ? 'selected' : ''}>${esc(f.name)}</option>`).join('');
 
 // ================================================================ views
 let view = { name: 'home' };
 let lastKey = '';
 
 function render() {
-  const fn = { home: vHome, lesson: vLesson, edit: vEdit, settings: vSettings, segs: vSegs, assign: vAssign, player: () => '<div class="player" id="player"></div>' }[view.name] || vHome;
+  const fn = { home: vHome, lesson: vLesson, edit: vEdit, settings: vSettings, segs: vSegs, assign: vAssign, records: vRecords, flow: vFlow }[view.name] || vHome;
   const cur = view.id && Store.get(view.id);
   if (cur && hasAudio(cur) && !audioUrls.has(cur.id)) loadAudioUrl(cur).then(() => { if (cur.audio?.missing && view.id === cur.id) render(); });
+  if (view.name !== 'lesson' && P.playing) stopStudy();
   $('#app').innerHTML = fn();
-  if (view.name === 'player') updatePlayer();
+  if (view.name === 'lesson') { updateStudyBar(); if (P.idx) markLine(P.idx, false); }
+  if (view.name === 'records') { attachChart(); attachBars(); }
+  if (view.name === 'flow') attachFlowDrag();
   if (view.name === 'segs') segLoop();
   const key = view.name + ':' + (view.id || '');
   if (key !== lastKey) { window.scrollTo(0, 0); lastKey = key; }
@@ -695,32 +726,396 @@ const fmtDate = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.ge
 
 function vHome() {
   const ls = [...Store.lessons].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
-  return bar('', 'Shadowing Coach', '<button class="icon" data-act="settings" aria-label="設定">設定</button>') + `
+  const { reviews, fresh } = todayPlan(), menu = [...reviews.map(l => [l, 'review']), ...fresh.map(l => [l, 'new'])];
+  menu.forEach(([l]) => loadAudioUrl(l).catch(() => {})); // タップしてすぐ始められるよう、音声を読み込んでおく
+  const sec = Stats.todaySec(), pct = Math.min(100, Math.round(sec / (S.goalMin * 60) * 100));
+  const nextDue = Store.lessons.filter(l => l.srs && !isDue(l)).map(l => l.srs.due).sort()[0];
+  const memBar = l => { const r = retention(l); return r == null ? '' : `<div class="mem"><i class="${r >= 80 ? 'hi' : r >= 60 ? 'mid' : 'lo'}" style="width:${Math.max(4, r)}%"></i></div>`; };
+  return bar('<button class="icon" data-act="records">記録</button>', 'Shadowing Coach', '<button class="icon" data-act="settings" aria-label="設定">設定</button>') + `
   <main class="wrap">
-    <button class="primary block" data-act="clipImport">📋 クリップボードから取り込む</button>
-    <label class="filebtn block center">🔊 音声をまとめて割り当て<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" multiple data-file="assign" hidden></label>
-    <div class="row wrap2"><button data-act="new">＋ 手入力で追加</button>
-      <label class="filebtn center">音声だけでレッスン作成<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" multiple data-file="batch" hidden></label></div>
-    ${ls.length ? `<ul class="lessons">${ls.map(l => {
-      const h = l.history || [];
-      return `<li><button class="lesson" data-act="open" data-id="${esc(l.id)}">
+    <section class="card today">
+      <div class="today-h"><h2>今日やること</h2><button class="mini" data-act="records">🔥 ${Stats.streak()}日連続 · ${Math.floor(sec / 60)}/${S.goalMin}分 ›</button></div>
+      <div class="goalbar"><i style="width:${pct}%"></i></div>
+      ${menu.length ? `<button class="primary block big" data-act="startToday">▶ 今日の練習を始める<small>${menu.length}件 · 1つ終わると自動で次へ進みます</small></button>`
+        + menu.map(([l, k]) => `<button class="titem" data-act="openToday" data-id="${esc(l.id)}">
+          <span class="tag ${k}">${k === 'review' ? '復習' : '新規'}</span>
+          <span class="tt"><b>${esc(l.title)}</b><small>${l.sentences.length}文 · ${hasAudio(l) ? '🔊番組音声' : '🔈読み上げ'}${k === 'review' ? ` · 記憶 ${retention(l)}%${l.srs.due < today() ? ' · ' + fmtDue(l.srs.due) : ''}` : ''}</small></span>
+          <span class="chev">▶</span></button>`).join('')
+      : `<p class="empty">🎉 今日の分は完了です${nextDue ? `<br>次の復習は ${fmtDue(nextDue)}` : ''}${Store.lessons.some(l => l.sentences.length) ? '' : '<br><small>下の「レッスンを追加」から教材を取り込むと、ここに並びます</small>'}</p>`}
+    </section>
+    ${ls.length ? `<h2>レッスン</h2><ul class="lessons">${ls.map(l => `<li><button class="lesson" data-act="open" data-id="${esc(l.id)}">
         <div class="lt">${esc(l.title || '無題')}</div>
-        <div class="lm">${l.date ? esc(l.date) + ' · ' : ''}${hasAudio(l) ? '🔊 ' : ''}${l.sentences.length}文 · 練習${h.length}回${h.length ? '(最終 ' + fmtDate(h[h.length - 1].at) + ')' : ''}</div>
-      </button></li>`; }).join('')}</ul>`
-    : '<p class="empty">まだレッスンがありません。<br>「レッスンを追加」からスクリプトを取り込みましょう。</p>'}
+        <div class="lm">${hasAudio(l) ? '🔊 ' : ''}${l.sentences.length}文 · ${l.srs ? `次の復習 ${fmtDue(l.srs.due)} · 記憶 ${retention(l)}%` : l.sentences.length ? '未学習' : 'スクリプト未登録'}</div>
+        ${memBar(l)}
+      </button></li>`).join('')}</ul>` : ''}
+    <section class="card"><h2>レッスンを追加</h2>
+      <button class="primary block" data-act="clipImport">📋 クリップボードから取り込む</button>
+      <label class="filebtn block center">🔊 音声をまとめて割り当て<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac" multiple data-file="assign" hidden></label>
+    </section>
     ${Store.ok ? '' : '<p class="note">この端末に保存できません。プライベートブラウズを使っている場合は通常のタブで開いてください。</p>'}
   </main>`;
+}
+
+// ================================================================ 記録画面(月のカレンダー・累計グラフ)
+const fmtMin = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}時間${m % 60 ? (m % 60) + '分' : ''}` : `${m}分`; };
+const GRADE_EMOJI = { again: '😣', ok: '🙂', good: '😄', done: '✅' };
+const ITEM_NAMES = { listen: 'リスニング(通し聞き)', read: '英文を見ながら聞く', overlap: 'オーバーラッピング', shadow: 'シャドーイング', repeat: 'リピーティング', jaen: '日→英', other: '内訳なし' };
+// 期間内の項目別・レッスン別の秒数
+function breakdown(dayKeys) {
+  const items = {}, lessons = {};
+  for (const d of dayKeys) {
+    const r = Stats.days[d];
+    if (!r) continue;
+    let known = 0;
+    for (const [k, v] of Object.entries(r.modes || {})) { items[k] = (items[k] || 0) + v; known += v; }
+    if (r.sec - known >= 30) items.other = (items.other || 0) + r.sec - known;
+    for (const [id, v] of Object.entries(r.lessons || {})) lessons[id] = (lessons[id] || 0) + v;
+  }
+  return { items, lessons };
+}
+function barList(entries, total, label) { // 横棒の一覧(1色・長さで量を表す)
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  return entries.map(([k, v]) => `<div class="brow">${label(k)}<div class="btrack"><i style="width:${Math.max(2, v / max * 100)}%"></i></div><span class="bval">${fmtMin(v)}<small>${total ? Math.round(v / total * 100) + '%' : ''}</small></span></div>`).join('');
+}
+let barGeo = null; // 日ごとの棒グラフの座標(ホバー用)
+function dailyBars(month, nDays) {
+  const W = 640, H = 170, L = 40, Rp = 8, T = 12, B = 22, iw = W - L - Rp, ih = H - T - B, g = S.goalMin;
+  const days = Array.from({ length: nDays }, (_, k) => `${month}-${String(k + 1).padStart(2, '0')}`);
+  const mins = days.map(d => (Stats.days[d]?.sec || 0) / 60);
+  const top = Math.max(g * 1.25, ...mins) * 1.05, Y = v => T + ih - v / top * ih, bw = iw / nDays;
+  let bars = '';
+  mins.forEach((v, k) => { if (v >= 0.5) bars += `<rect class="c-bar" x="${(L + k * bw + 1).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${Math.max(2, bw - 2).toFixed(1)}" height="${(T + ih - Y(v)).toFixed(1)}" rx="2"/>`; });
+  barGeo = { days, mins, L, bw, W, T, ih, Y };
+  return `<div class="chartbox"><svg viewBox="0 0 ${W} ${H}" id="dchart" role="img" aria-label="${+month.slice(5)}月の日ごとの練習時間">
+    <line class="c-grid" x1="${L}" x2="${W - Rp}" y1="${T + ih}" y2="${T + ih}"/>
+    <line class="c-goal" x1="${L}" x2="${W - Rp}" y1="${Y(g)}" y2="${Y(g)}"/><text class="c-lab" x="${L - 6}" y="${Y(g) + 4}" text-anchor="end">${g}分</text>
+    ${bars}
+    ${[1, 10, 20, nDays].map(k => `<text class="c-lab" x="${L + (k - 0.5) * bw}" y="${H - 6}" text-anchor="middle">${k}</text>`).join('')}
+    <rect id="dhl" class="c-hl" x="-20" y="${T}" width="${bw}" height="${ih}"/>
+    <rect x="${L}" y="0" width="${iw}" height="${H}" fill="transparent"/>
+  </svg><div class="ctip" id="dtip"></div></div>`;
+}
+function attachBars() {
+  const svg = $('#dchart'), tip = $('#dtip');
+  if (!svg || !barGeo) return;
+  const { days, L, bw, W } = barGeo;
+  const show = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W, k = Math.max(0, Math.min(days.length - 1, Math.floor((sx - L) / bw)));
+    const rec = Stats.days[days[k]], parts = Object.entries(rec?.modes || {}).sort((a, b) => b[1] - a[1]).map(([m, v]) => `${(ITEM_NAMES[m] || m).replace(/\(.*\)/, '')} ${fmtMin(v)}`);
+    $('#dhl').setAttribute('x', L + k * bw);
+    tip.textContent = `${+days[k].slice(5, 7)}/${+days[k].slice(8)} ${fmtMin(rec?.sec || 0)}${parts.length ? ' · ' + parts.join(' · ') : ''}`;
+    tip.style.display = 'block';
+    placeTip(tip, (L + (k + 0.5) * bw) / W * r.width, r.width);
+  };
+  svg.addEventListener('pointermove', show);
+  svg.addEventListener('pointerdown', show);
+  svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; $('#dhl').setAttribute('x', -20); });
+}
+function bestStreak() {
+  let best = 0, cur = 0, prev = null;
+  for (const d of Object.keys(Stats.days).filter(d => Stats.days[d].runs).sort()) {
+    cur = prev && daysBetween(prev, d) === 1 ? cur + 1 : 1;
+    best = Math.max(best, cur); prev = d;
+  }
+  return best;
+}
+const lessonsOn = d => Store.lessons.flatMap(l => (l.rates || []).filter(r => r.d === d).map(r => ({ l, g: r.g })));
+
+let chartGeo = null; // 累計グラフの座標(ホバー用)
+function cumulativeChart() {
+  const days = Object.keys(Stats.days).filter(d => Stats.days[d].sec > 0).sort();
+  if (!days.length) { chartGeo = null; return '<p class="hint">練習すると、ここに練習時間の積み上げが表示されます。</p>'; }
+  const start = days[0], n = daysBetween(start, today()) + 1, pts = [];
+  let acc = 0;
+  for (let k = 0; k < n; k++) { const d = addDays(start, k), sec = Stats.days[d]?.sec || 0; acc += sec; pts.push({ d, sec, acc }); }
+  const W = 640, H = 210, L = 56, Rp = 14, T = 14, B = 28, iw = W - L - Rp, ih = H - T - B;
+  const maxMin = Math.max(10, acc / 60);
+  const step = [5, 10, 15, 30, 60, 120, 300, 600, 1200, 3000, 6000, 12000].find(x => x >= maxMin / 3) || 12000;
+  const top = Math.ceil(maxMin / step) * step;
+  const X = k => L + (n === 1 ? iw / 2 : k / (n - 1) * iw), Y = min => T + ih - min / top * ih;
+  const line = pts.map((p, k) => `${k ? 'L' : 'M'}${X(k).toFixed(1)},${Y(p.acc / 60).toFixed(1)}`).join('');
+  const area = `${line}L${X(n - 1).toFixed(1)},${T + ih}L${X(0).toFixed(1)},${T + ih}Z`;
+  const lab = v => (v === 0 ? '0' : v < 60 ? v + '分' : (v / 60) + '時間');
+  let grid = '';
+  for (let v = 0; v <= top; v += step) grid += `<line class="c-grid" x1="${L}" x2="${W - Rp}" y1="${Y(v)}" y2="${Y(v)}"/><text class="c-lab" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${lab(v)}</text>`;
+  const md = d => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+  chartGeo = { pts, X, Y, L, iw, n, W };
+  return `<div class="chartbox" id="cbox">
+    <svg viewBox="0 0 ${W} ${H}" id="cchart" role="img" aria-label="${md(start)}からの累計練習時間 ${fmtMin(acc)}">
+      ${grid}
+      <path class="c-area" d="${area}"/><path class="c-line" d="${line}"/>
+      <text class="c-lab" x="${X(0)}" y="${H - 8}" text-anchor="${n === 1 ? 'middle' : 'start'}">${md(start)}</text>
+      ${n > 1 ? `<text class="c-lab" x="${X(n - 1)}" y="${H - 8}" text-anchor="end">${md(pts[n - 1].d)}</text>` : ''}
+      <line id="cx" class="c-x" y1="${T}" y2="${T + ih}" x1="-10" x2="-10"/>
+      <circle id="cdot" class="c-dot" r="5" cx="-10" cy="-10"/>
+      <rect x="${L - 10}" y="0" width="${iw + 20}" height="${H}" fill="transparent"/>
+    </svg><div class="ctip" id="ctip"></div></div>`;
+}
+function placeTip(tip, x, width) { // 画面からはみ出さない位置に吹き出しを置く
+  const half = tip.offsetWidth / 2;
+  tip.style.left = Math.max(half, Math.min(width - half, x)) + 'px';
+}
+function attachChart() {
+  const svg = $('#cchart'), tip = $('#ctip');
+  if (!svg || !chartGeo) return;
+  const { pts, X, Y, L, iw, n, W } = chartGeo;
+  const show = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W;
+    const k = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((sx - L) / iw * (n - 1)))), p = pts[k];
+    $('#cx').setAttribute('x1', X(k)); $('#cx').setAttribute('x2', X(k));
+    $('#cdot').setAttribute('cx', X(k)); $('#cdot').setAttribute('cy', Y(p.acc / 60));
+    tip.textContent = `${+p.d.slice(5, 7)}/${+p.d.slice(8)} 累計 ${fmtMin(p.acc)}(この日 ${fmtMin(p.sec)})`;
+    tip.style.display = 'block';
+    placeTip(tip, X(k) / W * r.width, r.width);
+  };
+  const hide = () => { tip.style.display = 'none'; $('#cx').setAttribute('x1', -10); $('#cx').setAttribute('x2', -10); $('#cdot').setAttribute('cx', -10); };
+  svg.addEventListener('pointermove', show);
+  svg.addEventListener('pointerdown', show);
+  svg.addEventListener('pointerleave', hide);
+}
+
+function vRecords() {
+  const v = view, t = today(), g = S.goalMin * 60;
+  const month = v.month || t.slice(0, 7), [y, m] = month.split('-').map(Number);
+  const nDays = new Date(y, m, 0).getDate(), lead = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const firstMonth = (Object.keys(Stats.days).sort()[0] || t).slice(0, 7);
+  let cells = '<i></i>'.repeat(lead), mSec = 0, mDays = 0, mGoal = 0;
+  for (let k = 1; k <= nDays; k++) {
+    const d = `${month}-${String(k).padStart(2, '0')}`, rec = Stats.days[d], sec = rec?.sec || 0, did = rec?.runs || sec >= 60;
+    const lv = d > t ? 'f' : !did ? 0 : sec >= g ? 3 : sec >= g / 2 ? 2 : 1;
+    if (did) mDays++;
+    if (sec >= g) mGoal++;
+    mSec += sec;
+    cells += `<button class="cal l${lv}${d === t ? ' t' : ''}${d === v.sel ? ' sel' : ''}" data-act="calDay" data-d="${d}" ${d > t ? 'disabled' : ''} aria-label="${m}月${k}日 ${Math.round(sec / 60)}分"><span>${k}</span>${sec >= 60 ? `<small>${Math.round(sec / 60)}分</small>` : ''}${sec >= g ? '<em>★</em>' : ''}</button>`;
+  }
+  const mLessons = new Set(Store.lessons.filter(l => (l.rates || []).some(r => r.d.startsWith(month))).map(l => l.id)).size;
+  const all = Object.values(Stats.days), totalSec = all.reduce((a, r) => a + (r.sec || 0), 0);
+  const totalDays = all.filter(r => r.runs || r.sec >= 60).length, learned = Store.lessons.filter(l => l.srs).length;
+  let detail = '';
+  if (v.sel) {
+    const rec = Stats.days[v.sel], items = lessonsOn(v.sel);
+    const bd = breakdown([v.sel]), bdE = Object.entries(bd.items).filter(e => e[1] >= 30).sort((a, b) => b[1] - a[1]);
+    detail = `<section class="card"><h2>${+v.sel.slice(5, 7)}月${+v.sel.slice(8)}日 <small>${rec ? `${fmtMin(rec.sec)}` : '記録なし'}${rec?.sec >= g ? ' · ★目標達成' : ''}</small></h2>
+      ${bdE.length ? barList(bdE, rec?.sec, k => `<span class="blab">${ITEM_NAMES[k] || k}</span>`) : ''}
+      ${items.length ? items.map(({ l, g: gr }) => `<button class="tq" data-act="open" data-id="${esc(l.id)}"><span>${GRADE_EMOJI[gr] || ''}</span><span>${esc(l.title)}</span></button>`).join('') : '<p class="hint">この日に評価したレッスンはありません。</p>'}</section>`;
+  }
+  return bar('<button class="icon" data-act="home">‹ ホーム</button>', '記録') + `
+  <main class="wrap">
+    <div class="tiles">
+      <div class="tile"><b>${fmtMin(totalSec)}</b><span>これまでの練習時間</span></div>
+      <div class="tile"><b>${totalDays}日</b><span>練習した日</span></div>
+      <div class="tile"><b>${learned}</b><span>学習したレッスン</span></div>
+      <div class="tile"><b>🔥 ${Stats.streak()}日</b><span>連続(最長 ${bestStreak()}日)</span></div>
+    </div>
+    <section class="card">
+      <div class="calnav">
+        <button class="icon" data-act="calMove" data-d="-1" ${month <= firstMonth ? 'disabled' : ''} aria-label="前の月">‹</button>
+        <h2>${y}年${m}月</h2>
+        <button class="icon" data-act="calMove" data-d="1" ${month >= t.slice(0, 7) ? 'disabled' : ''} aria-label="次の月">›</button>
+      </div>
+      <p class="hint center">${mDays}日練習 · ${fmtMin(mSec)} · ★目標達成 ${mGoal}日 · ${mLessons}レッスン</p>
+      <div class="cal-h">${[...'月火水木金土日'].map(c => `<span>${c}</span>`).join('')}</div>
+      <div class="cal-g">${cells}</div>
+      <div class="legend-row">少ない<i class="cal l1"></i><i class="cal l2"></i><i class="cal l3"></i>目標達成</div>
+    </section>
+    ${detail}
+    <section class="card"><h2>日ごとの練習時間 <small>${m}月 · 点線は1日の目標</small></h2>${dailyBars(month, nDays)}</section>
+    ${(() => {
+      const keys = v.period === 'all' ? Object.keys(Stats.days) : Object.keys(Stats.days).filter(d => d.startsWith(month));
+      const { items, lessons } = breakdown(keys), tot = keys.reduce((a, d) => a + (Stats.days[d].sec || 0), 0);
+      const itemE = Object.entries(items).sort((a, b) => b[1] - a[1]);
+      const lesE = Object.entries(lessons).filter(([id]) => Store.get(id)).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const per = `<div class="modes mini2"><button data-act="period" data-p="month" class="${v.period !== 'all' ? 'on' : ''}">${m}月</button><button data-act="period" data-p="all" class="${v.period === 'all' ? 'on' : ''}">全期間</button></div>`;
+      return `<section class="card"><h2>項目ごとの練習時間 <small>合計 ${fmtMin(tot)}</small></h2>${per}
+          ${itemE.length ? barList(itemE, tot, k => `<span class="blab">${ITEM_NAMES[k] || k}</span>`) : '<p class="hint">この期間の記録はまだありません。</p>'}</section>
+        <section class="card"><h2>レッスンごとの練習時間 <small>上位${lesE.length}件</small></h2>
+          ${lesE.length ? barList(lesE, tot, id => `<button class="blab link" data-act="open" data-id="${esc(id)}">${esc(Store.get(id).title)}<small>${(Store.get(id).rates || []).length}回学習</small></button>`) : '<p class="hint">この期間の記録はまだありません。</p>'}</section>`;
+    })()}
+    <section class="card"><h2>練習時間の積み上げ <small>累計 ${fmtMin(totalSec)}</small></h2>${cumulativeChart()}</section>
+  </main>`;
+}
+
+// ================================================================ 型(練習の流れ)の編集画面
+function vFlow() {
+  const f = S.flows[view.fi];
+  if (!f) { view = view.back || { name: 'settings' }; return render(); }
+  return bar('<button class="icon" data-act="flowBack">‹ 戻る</button>', '型を編集') + `
+  <main class="wrap">
+    <label class="f">型の名前<input data-flowname="${view.fi}" value="${esc(f.name)}"></label>
+    <section class="card"><h2>流れ <small>${flowSummary(f.id)}</small></h2>
+      <p class="hint">≡ を押したまま上下に動かすと順番が変わります。− ＋ で回数、✕ でそのステップを外します。</p>
+      <ol class="fsteps" id="fsteps">${f.steps.map((st, si) => `<li class="fstep" data-si="${si}">
+        <span class="grip" aria-label="ドラッグで並べ替え">≡</span>
+        <span class="fname"><b>${si + 1}. ${stepName(st.id)}</b>
+          <span class="fctl">
+            <span class="stepper"><button data-act="fcount" data-si="${si}" data-d="-1" ${st.n > 1 ? '' : 'disabled'} aria-label="回数を減らす">−</button><b>×${st.n}</b><button data-act="fcount" data-si="${si}" data-d="1" ${st.n < 9 ? '' : 'disabled'} aria-label="回数を増やす">＋</button></span>
+            <button data-act="fmove" data-si="${si}" data-d="-1" ${si ? '' : 'disabled'} aria-label="上へ">↑</button><button data-act="fmove" data-si="${si}" data-d="1" ${si < f.steps.length - 1 ? '' : 'disabled'} aria-label="下へ">↓</button>
+          </span></span>
+        <button class="fx" data-act="fdel" data-si="${si}" aria-label="このステップを外す">✕</button>
+      </li>`).join('') || '<li class="hint">ステップがありません。下から追加してください。</li>'}</ol>
+    </section>
+    <section class="card"><h2>ステップを足す <small>タップすると最後に入ります</small></h2>
+      <div class="addsteps">${STEPS.map(d => `<button data-act="fadd" data-step="${d.id}"><b>＋ ${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    </section>
+    <div class="row wrap2"><button data-act="flowDup">この型を複製</button><button class="danger" data-act="flowDel" ${S.flows.length < 2 ? 'disabled' : ''}>この型を削除</button></div>
+  </main>`;
+}
+// ≡ をドラッグして並べ替え(指でもマウスでも)
+function attachFlowDrag() {
+  const list = $('#fsteps');
+  if (!list) return;
+  list.addEventListener('pointerdown', e => {
+    const grip = e.target.closest('.grip');
+    if (!grip) return;
+    e.preventDefault();
+    const li = grip.closest('li');
+    li.classList.add('dragging');
+    grip.setPointerCapture(e.pointerId);
+    const move = ev => {
+      const after = [...list.children].filter(x => x !== li).find(x => { const r = x.getBoundingClientRect(); return ev.clientY < r.top + r.height / 2; });
+      if (after !== li.nextElementSibling) list.insertBefore(li, after || null);
+    };
+    const up = () => {
+      grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); grip.removeEventListener('pointercancel', up);
+      const f = S.flows[view.fi], order = [...list.children].map(x => +x.dataset.si);
+      f.steps = order.map(i => f.steps[i]);
+      saveSettings(); render();
+    };
+    grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
+  });
+}
+
+// ================================================================ 学習画面(ダイアログを見ながら、型の順番でステップが自動で進む)
+const SPEEDS = [0.7, 0.8, 0.9, 1.0, 1.1];
+const P = { token: 0, idx: 0, playing: false }; // 学習画面の再生状態
+
+function stopStudy() {
+  P.token++; P.playing = false;
+  finishSpeech?.(false); speechSynthesis.cancel(); audioEl.pause();
+  updateStudyBar();
+}
+function updateStudyBar() {
+  const b = $('#splay'); if (b) b.textContent = P.playing ? '⏸ 停止' : (view.step || P.idx ? '▶ 続きから' : '▶ 始める');
+  setStudyProg(0);
+}
+function setStudyProg(f) { const b = $('#sprog'); if (b) b.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%'; }
+function markLine(i, scroll = true) {
+  document.querySelectorAll('.sline.cur').forEach(e => e.classList.remove('cur'));
+  const el = document.querySelector(`.sline[data-i="${i}"]`);
+  if (el) { el.classList.add('cur'); if (scroll) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+}
+function revealLine(i, k) {
+  view.rev?.[k]?.add(i);
+  const el = document.querySelector(`.sline[data-i="${i}"] .${k}`);
+  if (el) { el.classList.remove('hid'); el.removeAttribute('data-act'); }
+}
+const lineRate = (L, s) => (segOf(L, s) ? S.audioRate : S.rate) * view.speed;
+const playLine = async (L, s) => {
+  const seg = segOf(L, s);
+  if (seg && await ensureAudio(L)) return playSeg(seg, lineRate(L, s));
+  return speakOnce(s.en, voiceFor(L, s), 'en-US', S.rate * view.speed);
+};
+const estLine = (L, s) => { const seg = segOf(L, s); return seg ? (seg.e - seg.s) * 1000 / lineRate(L, s) : s.en.split(/\s+/).length * 400 / lineRate(L, s) + 300; };
+
+// そのレッスンで流すステップの列(型を回数ぶん展開。訳がなければ日→英は省く)
+function studyPlan(L) {
+  const noJa = !L.sentences.some(s => s.ja), plan = [];
+  for (const it of flowItems(S[flowKey(L)])) {
+    if (noJa && it.id === 'jaen') continue;
+    for (let k = 1; k <= it.n; k++) plan.push({ id: it.id, rep: k, of: it.n });
+  }
+  return plan;
+}
+function showFor(id) { const d = stepDef(id); return { en: d.en ?? S.repeatShowEn, ja: d.ja }; }
+function setStep(k, plan) { Object.assign(view, { step: k, show: showFor(plan[k].id), rev: { en: new Set(), ja: new Set() } }); render(); }
+const nextToday = L => { const { reviews, fresh } = todayPlan(); return [...reviews, ...fresh].find(l => l.id !== L.id); };
+
+async function studyRun(fromStep = 0, fromLine = 0) {
+  const L = Store.get(view.id);
+  if (!L) return;
+  const plan = studyPlan(L);
+  if (!plan.length) return toast('この型にはステップがありません(✏️ から追加できます)');
+  stopStudy();
+  const tok = ++P.token, alive = () => P.token === tok;
+  const pause = async (ms, bar) => { // 停止されたら抜ける
+    for (let left = ms; left > 0; left -= 50) { await sleep(50); if (!alive()) throw 0; if (bar) setStudyProg(1 - left / ms); }
+    setStudyProg(0);
+  };
+  let mark = Date.now(), cur = null; // 練習時間をステップごとに記録する
+  const flush = () => {
+    if (cur) { const sec = (Date.now() - mark) / 1000; if (Stats.add(sec, false, { lesson: L.id, modes: { [cur]: sec } })) toast('🏆 今日の目標を達成しました！'); }
+    mark = Date.now();
+  };
+  P.playing = true; keepAwake(true);
+  try {
+    for (let k = fromStep; k < plan.length; k++) {
+      const d = stepDef(plan[k].id);
+      flush(); cur = d.id;
+      if (fromLine === 0 || k !== view.step) setStep(k, plan); else updateStudyBar();
+      if (S.announce && fromLine === 0) {
+        await speakOnce(d.name + (plan[k].of > 1 ? `、${plan[k].rep}回目` : ''), jaVoice(), 'ja-JP', 1.1);
+        if (!alive()) throw 0;
+      }
+      for (let i = fromLine; i < L.sentences.length; i++) {
+        const s = L.sentences[i];
+        if (d.jaen && !s.ja) continue;
+        P.idx = i; markLine(i);
+        if (d.jaen) {
+          revealLine(i, 'ja');
+          if (S.jaSpeak) { await speakOnce(s.ja, jaVoice(), 'ja-JP', 1.05); if (!alive()) throw 0; }
+          beep();
+          await pause(estLine(L, s) * S.jaenFactor + 1500, true); // 考える時間
+          revealLine(i, 'en');
+        }
+        const r = await playLine(L, s);
+        if (!alive()) throw 0;
+        if (d.repeat) { beep(); await pause(r.ms * S.repeatFactor + 600, true); } // 言う時間
+        else await pause(d.jaen ? 1200 : d.gap);
+      }
+      fromLine = 0;
+    }
+    flush(); cur = null;
+    P.idx = 0; P.playing = false; view.step = 0;
+    openSheet(true); // 最後まで終わったら、すぐ評価
+  } catch {} finally {
+    flush();
+    if (alive()) { P.playing = false; updateStudyBar(); }
+    keepAwake(false);
+  }
+}
+let sheetTimer = null;
+function openSheet(finished) {
+  const L = Store.get(view.id), nx = nextToday(L);
+  if (nx) loadAudioUrl(nx).catch(() => {}); // 次のレッスンをすぐ始められるように
+  Object.assign(view, { sheet: true, finished }); render();
+  clearInterval(sheetTimer);
+  if (!finished) return;
+  let left = 3; // 最後まで終わったときは、3秒後に自動で次へ
+  sheetTimer = setInterval(() => {
+    if (view.name !== 'lesson' || !view.sheet) return clearInterval(sheetTimer);
+    if (--left > 0) { const c = $('#scount'); if (c) c.textContent = `${left}秒後に自動で進みます`; }
+    else { clearInterval(sheetTimer); ACTS.sheetNext(); }
+  }, 1000);
+}
+// レッスンを「練習した」として記録し、次の復習日を決める
+function completeLesson(L, grade) {
+  rateLesson(L, grade);
+  L.history = [...(L.history || []), { at: Date.now(), grade }];
+  const hit = Stats.add(0, true);
+  Store.save();
+  return `${hit ? '🏆 今日の目標を達成！ ' : ''}次の復習: ${fmtDue(L.srs.due)}`;
+}
+function goNext(L, msg) {
+  const nx = nextToday(L);
+  if (nx) { startLesson(nx); toast(`${msg}。次は「${nx.title}」`); }
+  else { P.idx = 0; view = { name: 'home' }; render(); toast(`🎉 今日の分は完了！ ${msg}`); }
 }
 
 function vLesson() {
   const L = Store.get(view.id);
   if (!L) { view = { name: 'home' }; return vHome(); }
-  const course = courseItems();
-  const nSeg = L.sentences.filter(s => segOf(L, s)).length, N = L.sentences.length;
-  const audioMsg = !hasAudio(L) ? 'MP3 などを取り込むと、読み上げの代わりに番組の音声で練習できます'
-    : nSeg === N ? `${N}文すべて区切り済み。練習は番組音声で流れます`
-    : `${nSeg}/${N}文を区切り済み。区切っていない文は読み上げ音声になります`;
-  if (!N) return bar('<button class="icon" data-act="home">‹ 一覧</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
+  const N = L.sentences.length;
+  if (!N) return bar('<button class="icon" data-act="home">‹ ホーム</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
   <main class="wrap">
     <p class="empty">まだスクリプトがありません。<br>英文と日本語訳を追加しましょう。${hasAudio(L) ? '<br>保存すると、音声も自動で文ごとに区切ります。' : ''}</p>
     <button class="primary block" data-act="clipImport">📋 クリップボードから取り込む</button>
@@ -728,27 +1123,56 @@ function vLesson() {
     <p class="hint">書き起こしのページで「Shadowingに送る」ブックマークを押してコピーしてから、上のボタンを押してください(登録方法は 設定 → サイトから取り込む)。</p>
     <button class="ghost danger" data-act="del">このレッスンを削除</button>
   </main>`;
-  return bar('<button class="icon" data-act="home">‹ 一覧</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
-  <main class="wrap">
-    <button class="primary block big" data-act="course">▶ フルコースで練習
-      <small>${course.map(c => STEPS.find(d => d.id === c.id).short + (c.n > 1 ? '×' + c.n : '')).join(' → ') || '(設定でステップを選んでください)'}</small></button>
-    <div class="steps">${STEPS.map(d => `<button class="step" data-act="step" data-step="${d.id}"><b>${d.name}</b><span>${d.desc}</span></button>`).join('')}</div>
-    <button class="audiocard" data-act="segs"><b>🔊 番組音声 ${hasAudio(L) ? '— 区切りを編集' : 'を追加'}</b><span>${audioMsg}</span></button>
-    <div class="listhead"><h2>スクリプト <small>タップで再生 / 🐢 でゆっくり</small></h2>
-      <div class="toggles">
-        <label><input type="checkbox" data-act="hideEn" ${view.hideEn ? 'checked' : ''}>英文を隠す</label>
-        <label><input type="checkbox" data-act="hideJa" ${view.hideJa ? 'checked' : ''}>訳を隠す</label>
-      </div></div>
-    <ol class="sents">${L.sentences.map((s, i) => `<li>
-      <button class="sent" data-act="play" data-i="${i}">
-        ${s.speaker ? `<span class="spk">${esc(s.speaker)}</span>` : ''}
-        <span class="en ${view.hideEn ? 'hid' : ''}">${esc(s.en)}</span>
-        ${s.ja ? `<span class="ja ${view.hideJa ? 'hid' : ''}">${esc(s.ja)}</span>` : ''}
-      </button>
-      <button class="slow" data-act="slow" data-i="${i}" aria-label="ゆっくり再生">🐢</button></li>`).join('')}</ol>
+  const plan = studyPlan(L), k = Math.min(view.step || 0, Math.max(0, plan.length - 1));
+  if (!view.show) Object.assign(view, { step: 0, show: showFor(plan[0]?.id || 'listen'), rev: { en: new Set(), ja: new Set() }, speed: view.speed ?? 1.0 });
+  const d = stepDef(plan[k]?.id || 'listen'), sh = view.show, rev = view.rev, noJa = !L.sentences.some(s => s.ja);
+  const vis = (key, i) => sh[key] || rev[key].has(i);
+  const txt = (key, i, t) => `<span class="${key} ${vis(key, i) ? '' : 'hid'}" ${vis(key, i) ? '' : `data-act="reveal" data-k="${key}" data-i="${i}"`}>${esc(t)}</span>`;
+  const nSeg = L.sentences.filter(s => segOf(L, s)).length;
+  return bar('<button class="icon" data-act="home">‹ ホーム</button>', esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
+  <main class="wrap study-wrap">
+    <p class="hint srsline">${L.srs ? `${isDue(L) ? '<b>今日が復習日</b>' : `次の復習 ${fmtDue(L.srs.due)}`} · 記憶の目安 ${retention(L)}%` : '新しいレッスン'}
+      · ${hasAudio(L) ? (nSeg === N ? '🔊 番組音声' : `🔊 番組音声(${nSeg}/${N}文)`) : '読み上げ音声'}</p>
+    ${L.audio?.missing ? `<div class="notice">⚠ この端末に番組音声のファイルがありません(Safari とホーム画面のアプリでは保存場所が別です)。いまは読み上げ音声で流れます。<button data-act="segs">音声を選び直す</button></div>`
+      : !hasAudio(L) ? `<div class="notice">🔈 番組音声がまだ付いていないため、読み上げ音声で流れます。<button data-act="segs">番組音声を付ける</button></div>`
+      : nSeg < N ? `<div class="notice">${N - nSeg}文が区切れていないため、その文は読み上げ音声になります。<button data-act="segs">区切りを確認</button></div>` : ''}
+    <div class="flowbar">
+      <div class="steppills">${plan.map((p, i) => `<button class="pill ${i === k ? 'cur' : ''}" data-act="stepGo" data-k="${i}">${stepDef(p.id).short}${p.of > 1 ? ` ${p.rep}/${p.of}` : ''}</button>`).join('')}</div>
+      <div class="flowmeta"><select data-flowsel="${flowKey(L)}" aria-label="使う型">${flowOptions(S[flowKey(L)])}</select>
+        <button class="sm" data-act="flowEdit" data-id="${esc(flowOf(S[flowKey(L)]).id)}" aria-label="型を編集">✏️</button></div>
+    </div>
+    <p class="hint"><b>${d.name}</b> — ${d.desc}${noJa ? '(このレッスンは訳がないため、日→英は省きます)' : ''}</p>
+    <div class="chips">
+      <button class="chip ${sh.en ? 'on' : ''}" data-act="showEn">英文</button>
+      <button class="chip ${sh.ja ? 'on' : ''}" data-act="showJa" ${noJa ? 'disabled' : ''}>訳</button>
+      <span class="hint">行をタップ: その文だけ再生</span>
+    </div>
+    <div class="slines">${L.sentences.map((s, i) => `<button class="sline" data-act="line" data-i="${i}">
+      ${s.speaker ? `<span class="spk">${esc(s.speaker)}</span>` : ''}${txt('en', i, s.en)}${s.ja ? txt('ja', i, s.ja) : ''}</button>`).join('')}</div>
+    <button class="ghost block" data-act="segs">🔊 番組音声・区切り${hasAudio(L) ? 'の確認' : 'を追加'}</button>
     ${L.url ? `<p class="hint">出典: <a href="${esc(L.url)}" target="_blank" rel="noopener noreferrer">${esc(L.url)}</a></p>` : ''}
     <button class="ghost danger" data-act="del">このレッスンを削除</button>
-  </main>`;
+  </main>
+  <div class="sbar">
+    <div class="sprog"><i id="sprog"></i></div>
+    <div class="sbar-row">
+      <button data-act="speed" aria-label="速さ">${view.speed.toFixed(1)}×</button>
+      <button class="primary splay" id="splay" data-act="studyPlay">▶ 始める</button>
+      <button data-act="finish" aria-label="完了して評価">✓ 完了</button>
+    </div>
+  </div>
+  ${view.sheet ? rateSheet(L) : ''}`;
+}
+function rateSheet(L) {
+  const nx = nextToday(L), days = INTERVALS[nextStage(L, 'done')];
+  return `<div class="sheet-bg" data-act="sheetClose"></div>
+  <div class="sheet" role="dialog" aria-label="練習の終わり">
+    <h2>${view.finished ? '🎉 お疲れさまでした！' : 'ここまでにしますか？'}</h2>
+    <p class="hint">🔥 ${Stats.streak()}日連続 · 今日 ${Math.floor(Stats.todaySec() / 60)}/${S.goalMin}分 · 次の復習は${days === 1 ? '明日' : `${days}日後`}</p>
+    <button class="primary block big" data-act="sheetNext" id="snext">${nx ? `▶ 次へ: ${esc(nx.title)}` : 'ホームへ(今日の分はこれで最後)'}<small id="scount">${view.finished ? '3秒後に自動で進みます' : ''}</small></button>
+    <button class="block" data-act="sheetHard">😣 難しかった(明日もう一度)</button>
+    <div class="row wrap2"><button class="ghost" data-act="again">↻ もう一度この流れで</button><button class="ghost" data-act="sheetClose">閉じる</button></div>
+  </div>`;
 }
 
 function vEdit() {
@@ -759,10 +1183,8 @@ function vEdit() {
     <label class="f">日付<input type="date" data-f="date" value="${esc(d.date)}"></label>
     <section class="card">
       <h2>① スクリプトを取り込む</h2>
-      ${Store.server ? `<div class="row"><input type="url" data-f="url" value="${esc(d.url)}" placeholder="スクリプトが載っているページのURL" autocapitalize="off"><button data-act="fetchUrl">取得</button></div>
-      <p class="hint">ページ本文を下の欄に読み込みます。うまく取れないときは、ページの本文をコピーして直接貼り付けてください。不要な部分を消してから「抽出」し直すこともできます。</p>`
-      : `<p class="hint">スクリプトが載っているページを Safari で開き、会話の部分を選択してコピー → 下の欄に貼り付けて「抽出」を押してください。余分な部分が入っていても、抽出後に ✕ で消せます。</p>
-      <input type="url" data-f="url" value="${esc(d.url)}" placeholder="出典ページのURL(メモ用・任意)" autocapitalize="off">`}
+      <p class="hint">書き起こしのページで「Shadowingに送る」ブックマーク →「このページをコピー」→ 下の「📋 クリップボードから貼り付け」。手でコピーして貼り付けてもOKです。余分な部分は抽出後に ✕ で消せます。</p>
+      <input type="url" data-f="url" value="${esc(d.url)}" placeholder="出典ページのURL(メモ用・任意)" autocapitalize="off">
       <textarea data-f="raw" rows="8" placeholder="英文と日本語訳が並んだテキスト(英→訳→英→訳… でも、英文のまとまり→訳のまとまり でもOK)">${esc(d.raw)}</textarea>
       <div class="row wrap2"><button data-act="pasteRaw">📋 クリップボードから貼り付け</button><button data-act="parse">英文と訳を抽出 ↓</button></div>
     </section>
@@ -798,9 +1220,17 @@ function vSettings() {
       <button data-act="testVoice">試しに聞く</button>
       <p class="hint">Mac・iPhone は「設定 → アクセシビリティ → 読み上げコンテンツ → 声」で英語の「拡張」「プレミアム」音声をダウンロードすると、ぐっと自然な発音になります(追加後にこのページを再読み込み)。</p>
     </section>
-    <section class="card"><h2>フルコースの内容</h2>
-      <p class="hint">各ステップの回数。0 にすると省略します。</p>
-      ${STEPS.map(d => `<label class="f inline">${d.name}<input type="number" inputmode="numeric" min="0" max="5" data-course="${d.id}" value="${S.course[d.id] ?? 0}"></label>`).join('')}
+    <section class="card"><h2>練習の流れ(型)</h2>
+      <p class="hint">学習画面で ▶ を押すと、この順番でステップが自動で進みます。型を作って選んでおくと、ずっとその流れで練習できます。</p>
+      <label class="f">新しいレッスンで使う型<select data-flowsel="flowNew">${flowOptions(S.flowNew)}</select></label>
+      <label class="f">復習で使う型<select data-flowsel="flowReview">${flowOptions(S.flowReview)}</select></label>
+      ${S.flows.map((f, fi) => `<button class="flow-item" data-act="flowEdit" data-fi="${fi}"><span><b>${esc(f.name)}</b><small>${flowSummary(f.id)}</small></span><span class="chev">編集 ›</span></button>`).join('')}
+      <button data-act="flowAddNew">＋ 新しい型を作る</button>
+    </section>
+    <section class="card"><h2>続ける・復習</h2>
+      <label class="f inline">1日の目標(分)<input type="number" inputmode="numeric" min="1" max="120" data-sn="goalMin" value="${S.goalMin}"></label>
+      <label class="f inline">1日の新しいレッスン数<input type="number" inputmode="numeric" min="0" max="5" data-sn="newPerDay" value="${S.newPerDay}"></label>
+      <p class="hint">練習を終えるたびに、次の復習までの間隔が 1 → 3 → 7 → 14 → 30 → 60 → 120日 と広がります。終わったときに「😣 難しかった」を押すと、明日からやり直しになります。</p>
     </section>
     <section class="card"><h2>トレーニング</h2>
       ${range('audioRate', '番組音声の速さ', 0.5, 1.5, 0.05, v => v.toFixed(2) + '×')}
@@ -823,7 +1253,7 @@ function vSettings() {
       <button data-act="copyBookmarklet">コードをコピー</button>
     </section>
     <section class="card"><h2>バックアップ</h2>
-      <p class="hint">レッスンはこの端末の中だけに保存されています。機種変更に備えて、ときどきバックアップを保存してください(スクリプト・区切り・練習記録。音声ファイルは含みません)。</p>
+      <p class="hint">レッスンはこの端末の中だけに保存されています。機種変更に備えて、ときどきバックアップを保存してください(スクリプト・区切り・復習日・練習記録。音声ファイルは含みません)。</p>
       <div class="row wrap2"><button data-act="backup">バックアップを保存</button>
         <label class="filebtn center">バックアップから復元<input type="file" accept=".json,application/json" data-file="restore" hidden></label></div>
     </section>
@@ -884,16 +1314,19 @@ function vSegs() {
       <p class="hint">波形をタップするとその位置へ移動します(上: 全体 / 下: 拡大)。色の帯が区切った文です。</p>
     </section>
     <section class="card"><h2>③ 文に区切る</h2>
-      <p class="hint"><b>自動:</b> 「ダイアログ」のトラックなら、そのまま「自動で区切る」でOK(最初はファイル全体が範囲です)。番組全体の音声なら、会話の始まり・終わりの位置を登録してから押してください。無音の切れ目と文の長さから推測します。</p>
+      <p class="hint">音声を付けたときに自動で区切ってあります。④で聞いてずれが大きいときは、まず自動で区切り直してみてください。</p>
+      <button data-act="autoSplit" ${v.env ? '' : 'disabled'}>自動で区切り直す${v.env ? '' : '(音量データなし)'}</button>
+      <details class="adv"><summary>詳しい調整(番組全体の音声・手動で区切るとき)</summary>
+      <p class="hint"><b>範囲を決めて自動:</b> 会話の始まり・終わりの位置を登録してから「自動で区切り直す」を押します。</p>
       <div class="row wrap2">
         <button data-act="dlgMark" data-k="dlgS">会話の開始 = 現在位置<small>${fmtT(v.dlgS)}</small></button>
         <button data-act="dlgMark" data-k="dlgE">会話の終わり = 現在位置<small>${fmtT(v.dlgE)}</small></button>
       </div>
-      <button data-act="autoSplit" ${v.env ? '' : 'disabled'}>自動で区切る${v.env ? '' : '(音量データなし)'}</button>
       <p class="hint"><b>手動:</b> 会話の少し前から再生し、各文を話し始めた瞬間にタップ。最後の文が終わったらもう一度タップ。Mac ではスペースキーでも押せます。</p>
       ${v.tap == null ? '<button data-act="tapStart">タップで区切る を開始</button>'
         : `<button class="primary big block" data-act="tap">${v.tap < N ? `${v.tap + 1}文目の始まりでタップ` : '最後の文の終わりでタップ'}<small>${esc(L.sentences[Math.min(v.tap, N - 1)].en)}</small></button>
            <button class="ghost" data-act="tapCancel">中止</button>`}
+      </details>
     </section>
     <section class="card"><h2>④ 確認・微調整 <small>${done}/${N}文</small></h2>
       <p class="hint">▶ で区間を再生。始・終の − / ＋ で 0.1秒ずつ調整します(調整した側を試聴します)。</p>
@@ -912,27 +1345,43 @@ function vSegs() {
 }
 
 // ---- 無音の検出(env.data は 10ms ごとの音量 0〜100)
-function analyze(env, t0, t1) {
+function analyze(env, t0, t1, ratio = 0.35, minSil = 0.15) {
   const st = env.step, d = env.data;
   const a = Math.max(0, Math.floor(t0 / st)), b = Math.min(d.length, Math.ceil(t1 / st));
   if (b - a < 10) return null;
   const vals = Array.from(d.slice(a, b)).sort((x, y) => x - y);
   const lo = vals[Math.floor(vals.length * 0.1)], hi = vals[Math.floor(vals.length * 0.9)];
-  const thr = lo + (hi - lo) * 0.35;
+  const thr = lo + (hi - lo) * ratio;
   const runs = [];
   let rs = null;
   for (let k = a; k <= b; k++) {
     const quiet = k < b && d[k] < thr;
     if (quiet && rs == null) rs = k;
-    if (!quiet && rs != null) { if ((k - rs) * st >= 0.15) runs.push({ a: rs * st, b: k * st }); rs = null; }
+    if (!quiet && rs != null) { if ((k - rs) * st >= minSil) runs.push({ a: rs * st, b: k * st }); rs = null; }
   }
   return { thr, runs };
 }
 
 // 区間 [t0, t1] を文の数で区切る。成功すれば [{s, e}, ...]、失敗ならエラーメッセージを返す
 function computeSplit(env, sentences, t0, t1) {
+  // 無音が見つかりにくい音声でも区切れるよう、しきい値をゆるめながら試す
+  let err = '';
+  for (const [ratio, minSil] of [[0.35, 0.15], [0.5, 0.1], [0.62, 0.06]]) {
+    const r = splitWith(env, sentences, t0, t1, ratio, minSil);
+    if (typeof r !== 'string') return r;
+    err = r;
+  }
+  if (!(t1 - t0 >= 1)) return err;
+  // それでも足りなければ、文の長さの比率で区切る(番組音声のまま流れる。ずれは「番組音声・区切り」で調整)
+  const w = sentences.map(s => s.en.split(/\s+/).length + 1), W = w.reduce((a, b) => a + b, 0), r3 = x => Math.round(x * 1000) / 1000;
+  let pos = t0;
+  const segs = w.map(x => { const s = pos; pos += (t1 - t0) * x / W; return { s: r3(s), e: r3(pos) }; });
+  segs.approx = true;
+  return segs;
+}
+function splitWith(env, sentences, t0, t1, ratio, minSil) {
   const N = sentences.length;
-  const A = analyze(env, t0, t1);
+  const A = analyze(env, t0, t1, ratio, minSil);
   if (!A) return '区間が短すぎます';
   let S0 = t0, E0 = t1;
   const r0 = A.runs.find(r => r.a <= S0 + 0.05 && r.b > S0); // 開始位置が無音の中なら、声の始まりまで進める
@@ -980,7 +1429,7 @@ function autoSplit() {
   const segs = computeSplit(v.env, L.sentences, v.dlgS, v.dlgE);
   if (typeof segs === 'string') return toast(segs);
   v.segs = segs; v.dirty = true; render();
-  toast(`${segs.length}文に区切りました。▶ で確認して、ずれていたら微調整してください`);
+  toast(segs.approx ? '文の切れ目が見つからなかったため、文の長さの比率で区切りました。▶ で確認して調整してください' : `${segs.length}文に区切りました。▶ で確認して、ずれていたら微調整してください`);
 }
 
 // 手動で区切った境界を、近くの無音に合わせる
@@ -1022,20 +1471,6 @@ async function uploadAudio(file) {
     toast('この音声ファイルは読み込めませんでした(MP3 / M4A / WAV を選んでください)');
     view.busy = false; render();
   }
-}
-
-// ダイアログ音声を複数選んで、1ファイル=1レッスンとしてまとめて作る
-async function batchCreate(files) {
-  files = [...files].sort((a, b) => a.name.localeCompare(b.name, 'ja', { numeric: true }));
-  let made = 0;
-  for (const f of files) {
-    toast(`音声を読み込んでいます… ${made + 1}/${files.length}`);
-    const L = { id: uid(), title: f.name.replace(/\.[^.]+$/, ''), date: '', url: '', createdAt: Date.now() + made, history: [], sentences: [] };
-    try { await attachAudio(L, f); Store.lessons.push(L); made++; }
-    catch (e) { console.error(e); toast(`読み込めませんでした: ${f.name}`); await sleep(1500); }
-  }
-  await Store.save(); render();
-  toast(`${made}件のレッスンを作りました。各レッスンでスクリプトを追加してください`);
 }
 
 // ---- 波形の描画
@@ -1093,88 +1528,91 @@ function segLoop() {
 }
 function stopEditorAudio() { finishSpeech?.(false); audioEl.pause(); }
 
-function updatePlayer() {
-  const el = $('#player');
-  if (!el || !R) return;
-  const L = R.lesson;
-  if (R.done) {
-    el.innerHTML = bar('<button class="icon" data-act="stop">✕ 閉じる</button>', esc(L.title)) + `
-    <div class="stage done"><div class="em">🎉</div><h2>お疲れさまでした！</h2>
-      <p>${R.plan.length}ステップ完了 · このレッスンの練習 ${L.history.length}回目</p>
-      <button class="primary block" data-act="restart">もう一度</button>
-      <button class="block" data-act="stop">レッスンに戻る</button></div>`;
-    return;
-  }
-  const st = R.plan[R.stepIdx], s = L.sentences[R.idx];
-  const showEn = R.show.en || R.peek || R.revealEn, showJa = R.show.ja || R.peek;
-  el.innerHTML = bar('<button class="icon" data-act="stop">✕ 終了</button>', esc(L.title), `<span class="cnt">${R.stepIdx + 1}/${R.plan.length}</span>`) + `
-  <div class="pills">${R.plan.map((p, k) => `<span class="pill ${k < R.stepIdx ? 'done' : k === R.stepIdx ? 'cur' : ''}">${p.def.short}</span>`).join('')}</div>
-  <div class="stage">
-    <div class="stepname">${st.def.name}${st.of > 1 ? ` <small>${st.rep}/${st.of}回目</small>` : ''}</div>
-    <div class="stepdesc">${st.def.desc}</div>
-    <button class="card sentcard" data-act="peek">
-      <div class="num">${R.idx + 1} / ${L.sentences.length}${s.speaker ? ' · ' + esc(s.speaker) : ''}</div>
-      <div class="en ${showEn ? '' : 'hid'}">${esc(s.en)}</div>
-      ${s.ja ? `<div class="ja ${showJa ? '' : 'hid'}">${esc(s.ja)}</div>` : ''}
-      ${!showEn || (s.ja && !showJa) ? '<div class="peekhint">タップで一時的に表示</div>' : ''}
-    </button>
-    <div class="turn">${R.phase === 'turn' ? 'あなたの番 🎤' : R.paused ? '一時停止中' : ''}</div>
-    <div class="meter"><div id="bar"></div></div>
-  </div>
-  <div class="controls">
-    <button data-act="prev" aria-label="前の文">⏮</button>
-    <button data-act="replay" aria-label="この文をもう一度">↻</button>
-    <button class="primary" data-act="pause" aria-label="${R.paused ? '再開' : '一時停止'}">${R.paused ? '▶' : '⏸'}</button>
-    <button data-act="next" aria-label="次の文">⏭</button>
-  </div>
-  <button class="ghost nextstep" data-act="nextStep">このステップを飛ばす ⏩</button>`;
-}
-
 // ================================================================ actions
-function quickPlay(i, slow) {
-  const L = Store.get(view.id), s = L?.sentences[i];
-  if (!s) return;
-  speechSynthesis.cancel(); unlock();
-  document.querySelectorAll('.sent.playing').forEach(b => b.classList.remove('playing'));
-  const btn = document.querySelector(`.sent[data-i="${i}"]`);
-  btn?.classList.add('playing');
-  const seg = segOf(L, s);
-  if (seg) { finishSpeech?.(false); prepareAudio(L); unlock(); }
-  setTimeout(() => (seg ? playSeg(seg, slow ? Math.max(0.5, S.audioRate * 0.75) : S.audioRate)
-    : speakOnce(s.en, voiceFor(L, s), 'en-US', slow ? Math.max(0.5, S.rate * 0.7) : S.rate))
-    .then(() => btn?.classList.remove('playing')), 50);
+// レッスンを開いて、型の流れですぐ再生を始める(タップの中から呼ぶ。iOS の再生制限のため)
+function startLesson(L) {
+  stopStudy(); P.idx = 0;
+  view = { name: 'lesson', id: L.id };
+  render();
+  prepareAudio(L); unlock();
+  studyRun(0, 0);
 }
-
 const ACTS = {
   home() { view = { name: 'home' }; render(); },
   settings() { view = { name: 'settings', back: view }; render(); },
   back() { view = view.back || { name: 'home' }; render(); },
-  open(el) { view = { name: 'lesson', id: el.dataset.id }; render(); },
-  new() { view = { name: 'edit', draft: { title: '', date: today(), url: '', raw: '', rows: [] } }; render(); },
+  open(el) { stopStudy(); P.idx = 0; view = { name: 'lesson', id: el.dataset.id }; render(); },
+  // 今日の項目は、開いたらすぐ型の流れで始める(タップ1回で練習開始)
+  openToday(el) { startLesson(Store.get(el.dataset.id)); },
+  startToday() {
+    const { reviews, fresh } = todayPlan(), L = [...reviews, ...fresh][0];
+    if (!L) return toast('今日の分は完了しています');
+    startLesson(L);
+  },
+  stepGo(el) { const L = Store.get(view.id); stopStudy(); prepareAudio(L); unlock(); P.idx = 0; studyRun(+el.dataset.k, 0); },
+  finish() { stopStudy(); openSheet(false); },
+  sheetClose() { clearInterval(sheetTimer); view.sheet = false; render(); },
+  again() { clearInterval(sheetTimer); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); studyRun(0, 0); },
+  sheetNext() { clearInterval(sheetTimer); const L = Store.get(view.id); goNext(L, completeLesson(L, 'done')); },
+  sheetHard() { clearInterval(sheetTimer); const L = Store.get(view.id); completeLesson(L, 'again'); goNext(L, '明日もう一度出します'); },
+  showEn() { view.show.en = !view.show.en; render(); },
+  showJa() { view.show.ja = !view.show.ja; render(); },
+  reveal(el) { revealLine(+el.dataset.i, el.dataset.k); },
+  line(el) {
+    const L = Store.get(view.id), i = +el.dataset.i;
+    stopStudy(); prepareAudio(L); unlock();
+    P.idx = i; markLine(i, false); updateStudyBar();
+    revealLine(i, 'en');
+    setTimeout(() => playLine(L, L.sentences[i]), 50);
+  },
+  studyPlay() {
+    if (P.playing) return stopStudy();
+    const L = Store.get(view.id);
+    prepareAudio(L); unlock();
+    studyRun(view.step || 0, P.idx || 0);
+  },
+  speed(el) { view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length]; el.textContent = view.speed.toFixed(1) + '×'; },
+  // ---- 型の編集
+  flowEdit(el) {
+    const fi = el.dataset.id ? S.flows.findIndex(f => f.id === el.dataset.id) : +el.dataset.fi;
+    stopStudy();
+    view = { name: 'flow', fi, back: view }; render();
+  },
+  flowBack() { view = view.back || { name: 'settings' }; render(); },
+  flowAddNew() {
+    S.flows.push({ id: uid(), name: `自分の型 ${S.flows.length + 1}`, steps: [{ id: 'listen', n: 1 }, { id: 'shadow', n: 2 }, { id: 'jaen', n: 1 }] });
+    saveSettings();
+    view = { name: 'flow', fi: S.flows.length - 1, back: view }; render();
+  },
+  fcount(el) { const st = S.flows[view.fi].steps[+el.dataset.si]; st.n = Math.max(1, Math.min(9, st.n + +el.dataset.d)); saveSettings(); render(); },
+  fmove(el) {
+    const st = S.flows[view.fi].steps, i = +el.dataset.si, j = i + +el.dataset.d;
+    [st[i], st[j]] = [st[j], st[i]]; saveSettings(); render();
+  },
+  fdel(el) { S.flows[view.fi].steps.splice(+el.dataset.si, 1); saveSettings(); render(); },
+  fadd(el) {
+    const st = S.flows[view.fi].steps, last = st.at(-1);
+    if (last?.id === el.dataset.step) last.n = Math.min(9, last.n + 1); else st.push({ id: el.dataset.step, n: 1 });
+    saveSettings(); render(); toast(`「${stepName(el.dataset.step)}」を足しました`);
+  },
+  flowDup() {
+    const f = S.flows[view.fi];
+    S.flows.splice(view.fi + 1, 0, { id: uid(), name: f.name + 'のコピー', steps: structuredClone(f.steps) });
+    view.fi++; saveSettings(); render(); toast('複製しました。この画面はコピーの方です');
+  },
+  flowDel() {
+    const f = S.flows[view.fi];
+    if (S.flows.length < 2 || !confirm(`型「${f.name}」を削除しますか？`)) return;
+    S.flows.splice(view.fi, 1);
+    for (const key of ['flowNew', 'flowReview']) if (S[key] === f.id) S[key] = S.flows[0].id;
+    saveSettings(); view = view.back || { name: 'settings' }; render();
+  },
   edit() {
     const L = Store.get(view.id);
     view = { name: 'edit', id: L.id, draft: { id: L.id, title: L.title, date: L.date || '', url: L.url || '', raw: '', rows: L.sentences.map(s => ({ ...s })) } };
     render();
   },
   cancelEdit() { const id = view.draft.id; view = id ? { name: 'lesson', id } : { name: 'home' }; render(); },
-  async fetchUrl(el) {
-    const d = view.draft;
-    if (!d.url.trim()) return toast('URLを入力してください');
-    el.disabled = true; el.textContent = '取得中…';
-    try {
-      const r = await fetch('api/fetch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: d.url.trim() }) });
-      const j = await r.json().catch(() => ({ error: 'サーバーに接続できません' }));
-      if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
-      d.raw = j.lines.join('\n');
-      if (!d.title) d.title = j.title;
-      d.rows = parseScript(d.raw);
-      render();
-      toast(d.rows.length ? `${d.rows.length}文を抽出しました。不要な行は ✕ で削除してください` : '英文が見つかりませんでした。本文を貼り付けてみてください');
-    } catch (e) {
-      toast(e instanceof TypeError ? 'サーバーに接続できません(server.py を起動してください)' : e.message);
-      el.disabled = false; el.textContent = '取得';
-    }
-  },
   parse() {
     view.draft.rows = parseScript(view.draft.raw); render();
     toast(view.draft.rows.length ? `${view.draft.rows.length}文を抽出しました` : '英文が見つかりませんでした');
@@ -1208,23 +1646,6 @@ const ACTS = {
     await Store.save();
     view = { name: 'home' }; render();
   },
-  hideEn(el) { view.hideEn = el.checked; render(); },
-  hideJa(el) { view.hideJa = el.checked; render(); },
-  play(el) { quickPlay(+el.dataset.i, false); },
-  slow(el) { quickPlay(+el.dataset.i, true); },
-  course() { startTraining(view.id, courseItems()); },
-  step(el) { startTraining(view.id, [{ id: el.dataset.step, n: 1 }]); },
-  restart() { const items = R.items, id = R.lesson.id; R = null; startTraining(id, items); },
-  stop() {
-    if (R && !R.done) return interrupt('stop');
-    const id = R?.lesson.id || view.id; R = null; view = { name: 'lesson', id }; render();
-  },
-  pause: togglePause,
-  prev() { interrupt('prev'); },
-  next() { interrupt('next'); },
-  replay() { interrupt('replay'); },
-  nextStep() { interrupt('nextStep'); },
-  peek() { if (R && !R.done) { R.peek = !R.peek; updatePlayer(); } },
   // ---- 番組音声
   segs() { openSegs(view.id); },
   segsBack() {
@@ -1294,6 +1715,13 @@ const ACTS = {
     view.dirty = true; render();
   },
   backup: exportBackup,
+  records() { view = { name: 'records', sel: today() }; render(); },
+  calMove(el) {
+    const [y, m] = (view.month || today().slice(0, 7)).split('-').map(Number), dt = new Date(y, m - 1 + +el.dataset.d, 1);
+    view.month = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`; view.sel = null; render();
+  },
+  calDay(el) { view.sel = el.dataset.d; render(); },
+  period(el) { view.period = el.dataset.p; render(); },
   async doAssign() {
     const v = view;
     if (v.busy) return;
@@ -1362,7 +1790,6 @@ function onInput(e) {
   if (el.dataset.file === 'upload') { if (e.type === 'change') uploadAudio(el.files[0]); return; }
   if (el.dataset.file === 'assign') { if (e.type === 'change' && el.files.length) startAssign(el.files); return; }
   if (el.dataset.assign !== undefined && view.name === 'assign') { view.pairs[+el.dataset.assign] = el.value; return; }
-  if (el.dataset.file === 'batch') { if (e.type === 'change' && el.files.length) batchCreate(el.files); return; }
   if (el.dataset.file === 'restore') { if (e.type === 'change' && el.files[0]) restoreBackup(el.files[0]); return; }
   if (el.dataset.f && view.draft) { view.draft[el.dataset.f] = el.value; return; }
   if (el.dataset.r && view.draft) { view.draft.rows[+el.closest('.erow').dataset.i][el.dataset.r] = el.value; return; }
@@ -1373,12 +1800,17 @@ function onInput(e) {
     if (out) out.textContent = /rate/i.test(k) ? S[k].toFixed(2) + '×' : S[k].toFixed(1) + '倍';
     saveSettings(); return;
   }
-  if (el.dataset.course) { S.course[el.dataset.course] = Math.max(0, Math.min(5, parseInt(el.value, 10) || 0)); saveSettings(); }
+  if (el.dataset.sn) { S[el.dataset.sn] = Math.max(+el.min, Math.min(+el.max, parseInt(el.value, 10) || 0)); saveSettings(); return; }
+  if (el.dataset.flowsel) {
+    if (e.type === 'change') { S[el.dataset.flowsel] = el.value; saveSettings(); if (view.name === 'lesson') { stopStudy(); view.step = 0; P.idx = 0; view.show = null; } render(); }
+    return;
+  }
+  if (el.dataset.flowname) { S.flows[+el.dataset.flowname].name = el.value.trim() || '名前なし'; saveSettings(); return; }
 }
 document.addEventListener('input', onInput);
 document.addEventListener('change', onInput);
 
-// Mac のキーボード操作: Space=一時停止 ←→=前後の文 ↓=もう一度 N=次のステップ Esc=終了
+// Mac のキーボード操作: 学習画面は Space=再生/停止、区切り画面は Space=タップ/再生 ←→=移動
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,textarea,select')) return;
   if (view.name === 'segs') { // 区切り画面: Space=タップ/再生 ←→=1秒移動(Shiftで5秒)
@@ -1387,10 +1819,7 @@ document.addEventListener('keydown', e => {
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); audioEl.currentTime = Math.max(0, audioEl.currentTime + (e.key === 'ArrowLeft' ? -d : d)); }
     return;
   }
-  if (view.name !== 'player' || !R) return;
-  const map = { ' ': 'pause', ArrowLeft: 'prev', ArrowRight: 'next', ArrowDown: 'replay', n: 'nextStep', Escape: 'stop' };
-  const act = map[e.key];
-  if (act) { e.preventDefault(); ACTS[act](); }
+  if (view.name === 'lesson' && e.key === ' ') { e.preventDefault(); return ACTS.studyPlay(); }
 });
 
 // ================================================================ まとめて取り込み・音声の割り当て
@@ -1419,7 +1848,7 @@ async function importBundle(clips) {
 const byDate = (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.createdAt || 0) - (b.createdAt || 0); // 日付のないものは最後
 function startAssign(files) {
   files = [...files].sort((a, b) => a.name.localeCompare(b.name, 'ja', { numeric: true }));
-  const targets = Store.lessons.filter(l => l.sentences.length && !hasAudio(l) && l.id !== 'sample').sort(byDate);
+  const targets = Store.lessons.filter(l => l.sentences.length && !hasAudio(l)).sort(byDate);
   view = { name: 'assign', files, pairs: files.map((f, i) => targets[i]?.id || ''), busy: false };
   render();
 }
@@ -1489,7 +1918,7 @@ box.append(msg,ta,x);document.body.append(box);
 // ================================================================ backup
 async function exportBackup() {
   const name = `shadowing-backup-${today()}.json`;
-  const blob = new Blob([JSON.stringify({ app: 'shadowing-coach', version: 1, exportedAt: new Date().toISOString(), lessons: Store.lessons }, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'shadowing-coach', version: 1, exportedAt: new Date().toISOString(), lessons: Store.lessons, stats: Stats.days }, null, 1)], { type: 'application/json' });
   const file = new File([blob], name, { type: 'application/json' });
   if (navigator.canShare?.({ files: [file] })) { // iPhone: 共有シートから「ファイルに保存」など
     try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
@@ -1500,8 +1929,8 @@ async function exportBackup() {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 async function restoreBackup(file) {
-  let lessons;
-  try { const data = JSON.parse(await file.text()); lessons = Array.isArray(data) ? data : data.lessons; } catch {}
+  let lessons, stats;
+  try { const data = JSON.parse(await file.text()); lessons = Array.isArray(data) ? data : data.lessons; stats = data.stats; } catch {}
   if (!Array.isArray(lessons)) return toast('バックアップファイルを読み込めませんでした');
   if (!confirm(`${lessons.length}件のレッスンを復元します。同じレッスンは上書きされます。よろしいですか？`)) return;
   for (const L of lessons) {
@@ -1510,12 +1939,25 @@ async function restoreBackup(file) {
     const i = Store.lessons.findIndex(x => x.id === L.id);
     if (i >= 0) Store.lessons[i] = L; else Store.lessons.push(L);
   }
-  await Store.save();
+  for (const [d, r] of Object.entries(stats || {})) { // 練習記録は日ごとに多い方を残す
+    const cur = Stats.days[d];
+    Stats.days[d] = { sec: Math.max(cur?.sec || 0, r.sec || 0), runs: Math.max(cur?.runs || 0, r.runs || 0) };
+  }
+  await Stats.save(); await Store.save();
   view = { name: 'home' }; render(); toast('復元しました');
 }
 
 (async () => {
   await Store.load();
+  await Stats.load();
+  let changed = false;
+  for (const L of Store.lessons) {
+    if (!L.audio) continue;
+    const has = !!(await idb.get('audio:' + L.id).catch(() => null));
+    if (!!L.audio.missing === has) { if (has) delete L.audio.missing; else L.audio.missing = true; changed = true; }
+    if (await autoSplitIfNeeded(L)) changed = true;
+  }
+  if (changed) await Store.save();
   render();
   // オフラインでも開けるようにする(https か localhost のときだけ動く)
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
