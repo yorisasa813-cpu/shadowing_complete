@@ -210,6 +210,7 @@ textarea{resize:vertical;line-height:1.45}
 .sheet h2{font-size:18px}
 .sheet .rate{max-width:none}
 @keyframes up{from{transform:translateY(30px);opacity:0}}
+.pastebox{min-height:90px;font-size:16px}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -1739,23 +1740,11 @@ const ACTS = {
     toast(`${n}件に音声を付け、${split}件を自動で区切りました。各レッスンの「番組音声」で確認できます`);
   },
   async clipImport() {
-    const target = view.name === 'lesson' ? Store.get(view.id) : null;
+    const targetId = view.name === 'lesson' ? view.id : null;
     let text = '';
     try { text = await navigator.clipboard.readText(); } catch {}
-    const clips = parseClips(text);
-    if (clips.length > 1) return importBundle(clips);
-    const c = clips[0];
-    const rows = parseScript(c.raw);
-    const base = target
-      ? { id: target.id, title: target.title, date: target.date || '', url: target.url || '' }
-      : { title: '', date: today(), url: '' };
-    view = { name: 'edit', id: target?.id, draft: { ...base, title: c.title && !target?.sentences.length && !hasAudio(target) ? c.title : base.title || c.title,
-      url: c.url || base.url, raw: c.raw, rows: rows.length ? rows : target ? target.sentences.map(s => ({ ...s })) : [] } };
-    render();
-    toast(!text ? 'クリップボードを読めませんでした。下の欄に貼り付けてください'
-      : !rows.length ? '英文が見つかりませんでした。貼り付けた内容を確認してください'
-      : hasDialogue(c.raw) ? `DIALOGUE から${rows.length}文を取り出しました。確認して保存してください`
-      : `⚠ DIALOGUE の見出しが見つからないため、ページ全体から${rows.length}文を取り出しました。不要な行を消してください`);
+    if (!text.trim()) return openPasteSheet(targetId); // iPhone では読み取りが許可されないことがある
+    handleClipText(text, targetId);
   },
   async pasteRaw() {
     try {
@@ -1822,6 +1811,44 @@ document.addEventListener('keydown', e => {
   if (view.name === 'lesson' && e.key === ' ') { e.preventDefault(); return ACTS.studyPlay(); }
 });
 
+// ================================================================ クリップボードから取り込み
+function handleClipText(text, targetId) {
+  const target = targetId ? Store.get(targetId) : null;
+  const clips = parseClips(text);
+  if (clips.length > 1) return importBundle(clips);
+  const c = clips[0];
+  const rows = parseScript(c.raw);
+  const base = target
+    ? { id: target.id, title: target.title, date: target.date || '', url: target.url || '' }
+    : { title: '', date: today(), url: '' };
+  view = { name: 'edit', id: target?.id, draft: { ...base, title: c.title && !target?.sentences.length && !hasAudio(target) ? c.title : base.title || c.title,
+    url: c.url || base.url, raw: c.raw, rows: rows.length ? rows : target ? target.sentences.map(s => ({ ...s })) : [] } };
+  render();
+  toast(!rows.length ? '英文が見つかりませんでした。貼り付けた内容を確認してください'
+    : hasDialogue(c.raw) ? `DIALOGUE から${rows.length}文を取り出しました。確認して保存してください`
+    : `⚠ DIALOGUE の見出しが見つからないため、ページ全体から${rows.length}文を取り出しました。不要な行を消してください`);
+}
+// クリップボードを直接読めないときの貼り付け枠(長押し →「ペースト」で、そのまま取り込む)
+function openPasteSheet(targetId) {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="sheet-bg"></div>
+    <div class="sheet" role="dialog" aria-label="貼り付け">
+      <h2>📋 ここに貼り付けてください</h2>
+      <p class="hint">下の枠を<b>長押し</b>して「<b>ペースト</b>」を選ぶと、そのまま取り込みます。</p>
+      <textarea class="pastebox" rows="4" placeholder="ここを長押し →「ペースト」"></textarea>
+      <button class="ghost" data-x>やめる</button>
+    </div>`;
+  document.body.append(wrap);
+  const ta = wrap.querySelector('textarea'), close = () => wrap.remove();
+  wrap.querySelector('.sheet-bg').onclick = close;
+  wrap.querySelector('[data-x]').onclick = close;
+  let done = false;
+  const go = t => { if (done || !t.trim()) return; done = true; close(); handleClipText(t, targetId); };
+  ta.addEventListener('paste', e => { const t = e.clipboardData?.getData('text/plain') || ''; if (t) { e.preventDefault(); go(t); } });
+  ta.addEventListener('input', () => { if (ta.value.length > 30) go(ta.value); });
+  setTimeout(() => ta.focus(), 150);
+}
+
 // ================================================================ まとめて取り込み・音声の割り当て
 async function importBundle(clips) {
   let made = 0, updated = 0, skipped = 0, withJa = 0;
@@ -1873,15 +1900,16 @@ const el=document.querySelector('.note-common-styles__textnote-body,[class*="ent
 let txt=HEAD+'\\n'+one(document.title,location.href,el.innerText);
 const mk=(tag,text,css)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(css)e.style.cssText=css;return e;};
 const F='-apple-system,sans-serif';
-const box=mk('div','','position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;background:#fff;color:#111;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);padding:14px;font:15px/1.5 '+F+';max-height:80vh;overflow:auto');
+const box=mk('div','','position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;background:#fff;color:#111;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);padding:14px;font:15px/1.5 '+F+';max-height:80vh;overflow:auto;color-scheme:light');
 const copy=mk('button','このページをコピー','display:block;width:100%;margin:10px 0 0;padding:12px;border:0;border-radius:10px;background:#2f6fde;color:#fff;font:600 16px '+F);
 const msg=mk('div','','font-size:13px;color:#555;margin-top:6px');
-const ta=mk('textarea','','display:none;width:100%;height:90px;margin-top:8px');
-copy.onclick=async()=>{try{await navigator.clipboard.writeText(txt);copy.textContent='コピーしました → アプリで「クリップボードから取り込む」';}catch(e){ta.value=txt;ta.style.display='block';ta.focus();ta.select();copy.textContent='下の文字を全選択してコピーしてください';}};
+const ta=mk('textarea','','display:none;width:100%;height:90px;margin-top:8px;background:#fff;color:#111;-webkit-text-fill-color:#111;border:1px solid #ccc;border-radius:8px');
+const done=()=>{copy.textContent='コピーしました → アプリで「クリップボードから取り込む」';ta.style.display='none';};
+copy.onclick=async()=>{ta.value=txt;ta.style.display='block';ta.readOnly=true;ta.focus();ta.setSelectionRange(0,txt.length);let ok=false;try{ok=document.execCommand('copy');}catch(e){}if(ok)return done();try{await navigator.clipboard.writeText(txt);done();}catch(e){ta.select();copy.textContent='下の文字を全選択してコピーしてください';}};
 box.append(mk('div','Shadowing Coach に送る','font-weight:700'),copy);
 const creator=location.hostname==='note.com'&&location.pathname.split('/')[1];
 if(creator){
-const IN='width:100%;margin-top:6px;padding:8px;font-size:16px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box';
+const IN='width:100%;margin-top:6px;padding:8px;font-size:16px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box;background:#fff;color:#111;-webkit-text-fill-color:#111;color-scheme:light;opacity:1';
 const from=mk('input','',IN);from.type='date';const to=mk('input','',IN);to.type='date';
 const kw=mk('input','',IN);kw.value='ラジオ英会話';
 const go=mk('button','この人の記事を期間でまとめて取得','display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #2f6fde;border-radius:10px;background:#fff;color:#2f6fde;font:600 15px '+F);
