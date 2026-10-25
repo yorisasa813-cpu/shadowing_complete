@@ -2250,7 +2250,8 @@ function readId3(buf) {
   }
   return out;
 }
-const isDialogueTrack = it => /dialog|ダイアロ/i.test(`${it.tags.TIT2 || ''} ${it.name}`);
+// 「Lesson 41 DIALOGUE」はダイアログ。「Lesson 41 DIALOGUE 練習」は練習用なので、その他の音声に回す
+const isDialogueTrack = it => { const t = `${it.tags.TIT2 || ''} ${it.name}`; return /dialog|ダイアロ/i.test(t) && !/練習|practice|drill/i.test(t); };
 const lessonNoOf = l => +(String(l.title).match(/[(（](\d{1,3})[)）]/)?.[1] || 0);
 function trackNo(it) { const m = `${it.tags.TIT2 || ''} ${it.tags.TALB || ''}`.match(/(?:lesson|レッスン|第)\s*0*(\d{1,3})/i); return m ? +m[1] : 0; }
 function trackDate(it) { const m = String(it.tags.TIT2 || '').match(/(\d{1,2})月\s*(\d{1,2})日/); return m ? `-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}` : ''; }
