@@ -265,7 +265,7 @@ function toast(msg) {
 // ================================================================ settings
 const DEFAULTS = {
   rate: 0.95, audioRate: 1.0, enVoice: '', enVoice2: '', jaVoice: '',
-  repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true,
+  repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true, bgPlay: true,
   goalMin: 15, newPerDay: 1,
   // 練習の流れ(型)。steps は順番どおりのステップと回数
   flows: [
@@ -724,6 +724,7 @@ function unlock() { // iOS: 最初の音声はタップ操作の中で鳴らす�
     audioEl.muted = true;
     primeP = audioEl.play().then(() => audioEl.pause()).catch(() => {}).finally(() => { audioEl.muted = false; });
   }
+  if (mixEl.paused && !P.mix) { mixEl.muted = true; mixEl.play().then(() => mixEl.pause()).catch(() => {}).finally(() => { mixEl.muted = false; }); }
 }
 function beep() {
   if (!S.beep || !actx) return;
@@ -775,6 +776,7 @@ function render() {
   if (view.name !== 'lesson') stopExtra();
   if (view.name !== 'assign') previewEl.pause();
   if (view.name === 'lesson' && cur?.extras) loadExtraUrls(cur);
+  if (view.name === 'lesson' && cur) prebuild(cur);
   $('#app').innerHTML = fn();
   if (view.name === 'lesson') { updateStudyBar(); if (P.idx) markLine(P.idx, false); }
   if (view.name === 'records') { attachChart(); attachBars(); }
@@ -790,6 +792,7 @@ const fmtDate = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.ge
 function vHome() {
   const { reviews, fresh } = todayPlan(), menu = [...reviews.map(l => [l, 'review']), ...fresh.map(l => [l, 'new'])];
   menu.forEach(([l]) => loadAudioUrl(l).catch(() => {})); // タップしてすぐ始められるよう、音声を読み込んでおく
+  if (menu[0]) setTimeout(() => prebuild(menu[0][0]), 300);
   const sec = Stats.todaySec(), pct = Math.min(100, Math.round(sec / (S.goalMin * 60) * 100));
   const nextDue = Store.lessons.filter(l => l.srs && !isDue(l)).map(l => l.srs.due).sort()[0];
   const n = Store.lessons.length;
@@ -1095,7 +1098,7 @@ const P = { token: 0, idx: 0, playing: false }; // 学習画面の再生状態
 function stopStudy() {
   stopExtra();
   P.token++; P.playing = false;
-  finishSpeech?.(false); speechSynthesis.cancel(); audioEl.pause();
+  finishSpeech?.(false); speechSynthesis.cancel(); audioEl.pause(); mixEl.pause();
   updateStudyBar();
 }
 function updateStudyBar() {
@@ -1131,7 +1134,7 @@ function studyPlan(L) {
   return plan;
 }
 function showFor(id) { const d = stepDef(id); return { en: d.en ?? S.repeatShowEn, ja: d.ja }; }
-function setStep(k, plan) { Object.assign(view, { step: k, show: showFor(plan[k].id), rev: { en: new Set(), ja: new Set() } }); render(); }
+function setStep(k, plan) { P.idx = 0; Object.assign(view, { step: k, show: showFor(plan[k].id), rev: { en: new Set(), ja: new Set() } }); render(); } // 前のステップの行のハイライトを残さない
 const nextToday = L => { const { reviews, fresh } = todayPlan(); return [...reviews, ...fresh].find(l => l.id !== L.id); };
 
 async function studyRun(fromStep = 0, fromLine = 0) {
@@ -1213,6 +1216,168 @@ function goNext(L, msg) {
   const nx = nextToday(L);
   if (nx) { startLesson(nx); toast(`${msg}。次は「${nx.title}」`); }
   else { P.idx = 0; view = { name: 'home' }; render(); toast(`🎉 今日の分は完了！ ${msg}`); }
+}
+
+// ================================================================ バックグラウンド再生
+// 画面を消すと iPhone はプログラムをほぼ止めるので、流れ全体(各文・間・言う時間・考える時間・合図音)を
+// 先に1本の音声に組み立てて、ふつうの音声ファイルとして再生する(これなら消灯中も続く)
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+const mixEl = new Audio(SILENT_WAV);
+mixEl.preservesPitch = mixEl.webkitPreservesPitch = true;
+const mixCache = new Map(); // lessonId → { key, url, timeline, dur }
+const canMix = L => !!S.bgPlay && hasAudio(L) && L.sentences.length > 0 && L.sentences.every(s => segOf(L, s));
+const mixKey = L => JSON.stringify([L.audio?.v, L.sentences.map(s => s.seg), studyPlan(L).map(p => p.id), S.repeatFactor, S.jaenFactor]);
+
+function wavBlob(buf) {
+  const d = buf.getChannelData(0), sr = buf.sampleRate, n = d.length, v = new DataView(new ArrayBuffer(44 + n * 2));
+  const w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) { const x = Math.max(-1, Math.min(1, d[i])); v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true); }
+  return new Blob([v.buffer], { type: 'audio/wav' });
+}
+async function buildMix(L) {
+  const key = mixKey(L), old = mixCache.get(L.id);
+  if (old?.key === key) return old;
+  const rec = await idb.get('audio:' + L.id);
+  if (!rec) throw new Error('no audio');
+  // 1) 時間割を作る(何秒から何秒が、どのステップのどの文か)
+  const plan = studyPlan(L), ev = [], tones = [];
+  let t = 0.4;
+  plan.forEach((p, k) => {
+    const d = stepDef(p.id);
+    tones.push({ t, step: true }); ev.push({ t0: t, k, i: -1, kind: 'step' }); t += 1.0;
+    L.sentences.forEach((s, i) => {
+      if (d.jaen && !s.ja) return;
+      const len = s.seg.e - s.seg.s;
+      if (d.jaen) { tones.push({ t }); ev.push({ t0: t, len: len * S.jaenFactor + 1.5, k, i, kind: 'think' }); t += len * S.jaenFactor + 1.5; }
+      ev.push({ t0: t, len, k, i, kind: 'play', seg: s.seg }); t += len;
+      if (d.repeat) { tones.push({ t }); ev.push({ t0: t, len: len * S.repeatFactor + 0.6, k, i, kind: 'turn' }); t += len * S.repeatFactor + 0.6; }
+      else t += (d.jaen ? 1200 : d.gap) / 1000;
+    });
+  });
+  t += 0.6;
+  // 2) 音を並べて1本にする
+  const SR = 22050, ctx = new OfflineAudioContext(1, Math.ceil(t * SR), SR);
+  const bytes = await rec.blob.arrayBuffer();
+  const src = await new Promise((res, rej) => { const q = ctx.decodeAudioData(bytes, res, rej); q?.catch?.(rej); });
+  for (const e of ev) if (e.kind === 'play') {
+    const n = ctx.createBufferSource(); n.buffer = src; n.connect(ctx.destination); n.start(e.t0, e.seg.s, e.seg.e - e.seg.s);
+  }
+  for (const x of tones) {
+    const notes = x.step ? [[660, 0], [880, 0.18]] : [[880, 0]];
+    if (!x.step && !S.beep) continue;
+    for (const [f, dt] of notes) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t0 = x.t + dt;
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+      o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + 0.32);
+    }
+  }
+  const url = URL.createObjectURL(wavBlob(await ctx.startRendering()));
+  if (old) URL.revokeObjectURL(old.url);
+  const res = { key, url, timeline: ev, dur: t };
+  mixCache.set(L.id, res);
+  if (mixCache.size > 4) { const [id, m] = mixCache.entries().next().value; if (id !== L.id) { URL.revokeObjectURL(m.url); mixCache.delete(id); } }
+  return res;
+}
+const prebuild = L => { if (L && canMix(L)) buildMix(L).catch(() => {}); };
+
+// 流れを再生する入り口: 1本の音声にできるならそれで、できなければ従来の方法で
+function runLesson(fromStep = 0, fromLine = 0) {
+  const L = Store.get(view.id);
+  if (L && canMix(L)) return mixPlay(L, fromStep, fromLine);
+  return studyRun(fromStep, fromLine);
+}
+async function mixPlay(L, fromStep, fromLine) {
+  stopStudy();
+  const tok = ++P.token;
+  P.playing = true; updateStudyBar();
+  const b = $('#splay'); if (b && !mixCache.get(L.id)) b.textContent = '準備中…';
+  let m;
+  try { m = await buildMix(L); } catch (e) { console.error(e); if (P.token === tok) { P.playing = false; return studyRun(fromStep, fromLine); } return; }
+  if (P.token !== tok) return;
+  const e0 = m.timeline.find(e => e.k === fromStep && (e.kind === 'step' ? fromLine === 0 : e.i >= fromLine));
+  if (mixEl.dataset.u !== m.url) { mixEl.src = m.url; mixEl.dataset.u = m.url; }
+  mixEl.playbackRate = S.audioRate * view.speed;
+  P.mix = { id: L.id, m, lastCT: e0?.t0 || 0, step: -1 };
+  try { mixEl.currentTime = e0?.t0 || 0; await mixEl.play(); }
+  catch { P.playing = false; P.mix = null; updateStudyBar(); return toast('再生を始められませんでした。もう一度 ▶ を押してください'); }
+  setMediaSession(L);
+  updateStudyBar();
+  prebuild(nextToday(L)); // 次のレッスンも先に用意しておく(消灯中に続けて流すため)
+}
+function mixEventAt(m, t) { let e = null; for (const x of m.timeline) { if (x.t0 <= t) e = x; else break; } return e; }
+function syncMixUI() { // 画面に、今流れている所を映す
+  const x = P.mix;
+  if (!x || view.name !== 'lesson' || view.id !== x.id || document.visibilityState !== 'visible') return;
+  const L = Store.get(x.id), e = mixEventAt(x.m, mixEl.currentTime);
+  if (!e) return;
+  if (e.k !== view.step || x.step !== e.k) { x.step = e.k; x.line = -1; setStep(e.k, studyPlan(L)); }
+  if (e.i >= 0) {
+    if (x.line !== e.i) { x.line = e.i; P.idx = e.i; markLine(e.i); } // ステップの最初の行もハイライトする
+    if (e.kind === 'think') revealLine(e.i, 'ja');
+    if (e.kind === 'play' && stepDef(studyPlan(L)[e.k]?.id).jaen) revealLine(e.i, 'en');
+  }
+  setStudyProg(e.kind === 'think' || e.kind === 'turn' ? (mixEl.currentTime - e.t0) / e.len : 0);
+}
+mixEl.addEventListener('timeupdate', () => {
+  const x = P.mix;
+  if (!x) return;
+  const ct = mixEl.currentTime, d = ct - x.lastCT;
+  x.lastCT = ct;
+  if (d > 0 && d < 3600) { // 練習時間を記録(消灯中の分も、戻ったときにまとめて入る)
+    const e = mixEventAt(x.m, ct), L = Store.get(x.id), id = studyPlan(L)[e?.k ?? 0]?.id || 'listen';
+    if (Stats.add(d / (mixEl.playbackRate || 1), false, { lesson: x.id, modes: { [id]: d / (mixEl.playbackRate || 1) } })) toast('🏆 今日の目標を達成しました！');
+  }
+  syncMixUI();
+});
+// 画面が見えている間は、描き換えのたびに音声の位置へ合わせる(ハイライトやぼかしの解除が声とずれないように)
+let mixRAF = 0, mixTimer = 0;
+function mixLoop() {
+  cancelAnimationFrame(mixRAF); clearInterval(mixTimer);
+  const alive = () => P.mix && !mixEl.paused;
+  const tick = () => { if (!alive()) return; syncMixUI(); mixRAF = requestAnimationFrame(tick); };
+  tick();
+  mixTimer = setInterval(() => (alive() ? syncMixUI() : clearInterval(mixTimer)), 50); // 描き換えが止まる環境の予備
+}
+mixEl.addEventListener('playing', mixLoop);
+document.addEventListener('visibilitychange', () => { syncMixUI(); if (document.visibilityState === 'visible') mixLoop(); });
+mixEl.addEventListener('ended', () => {
+  const x = P.mix;
+  if (!x) return;
+  const L = Store.get(x.id), nx = nextToday(L), nm = nx && mixCache.get(nx.id);
+  P.mix = null; P.playing = false;
+  if (document.visibilityState !== 'visible' && nm && nm.key === mixKey(nx)) {
+    // 画面が消えているときは、記録して、用意してある次のレッスンをそのまま流す
+    completeLesson(L, 'done');
+    view = { name: 'lesson', id: nx.id, step: 0 };
+    P.idx = 0; P.mix = { id: nx.id, m: nm, lastCT: 0, step: -1 }; P.playing = true;
+    mixEl.src = nm.url; mixEl.dataset.u = nm.url; mixEl.currentTime = 0;
+    mixEl.play().then(() => setMediaSession(nx)).catch(() => { P.playing = false; P.mix = null; });
+    return;
+  }
+  if (view.name === 'lesson' && view.id === L.id) { view.step = 0; P.idx = 0; openSheet(true); }
+  else completeLesson(L, 'done');
+});
+// ロック画面の操作(再生・一時停止・前後のステップ)
+function setMediaSession(L) {
+  if (!('mediaSession' in navigator)) return;
+  const ms = navigator.mediaSession;
+  try { ms.metadata = new MediaMetadata({ title: shortTitle(L.title), artist: 'Shadowing Coach', album: flowOf(S[flowKey(L)])?.name || '', artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }] }); } catch {}
+  const jump = dir => {
+    const x = P.mix; if (!x) return;
+    const e = mixEventAt(x.m, mixEl.currentTime), k = Math.max(0, (e?.k ?? 0) + dir), t = x.m.timeline.find(v => v.k === k && v.kind === 'step');
+    if (t) mixEl.currentTime = t.t0;
+  };
+  const set = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+  set('play', () => { if (P.mix) { mixEl.play(); P.playing = true; updateStudyBar(); } });
+  set('pause', () => { mixEl.pause(); P.playing = false; updateStudyBar(); });
+  set('previoustrack', () => jump(-1));
+  set('nexttrack', () => jump(1));
+  set('seekbackward', d => { mixEl.currentTime = Math.max(0, mixEl.currentTime - (d?.seekOffset || 5)); });
+  set('seekforward', d => { mixEl.currentTime = mixEl.currentTime + (d?.seekOffset || 5); });
 }
 
 function vLesson() {
@@ -1346,6 +1511,8 @@ function vSettings() {
       ${chk('jaSpeak', '日→英で日本語訳を読み上げる')}
       ${chk('announce', 'ステップの名前を音声で案内する')}
       ${chk('beep', '「あなたの番」でビープ音を鳴らす')}
+      ${chk('bgPlay', '画面を消しても再生を続ける(番組音声のレッスン)')}
+      <p class="hint">オンのときは、練習の流れを1本の音声にしてから再生します。ステップの案内は合図の音になり、日→英の日本語の読み上げは入りません。</p>
     </section>
     <section class="card"><h2>サイトから取り込む(ブックマークレット)</h2>
       <p class="hint">noteやブログの書き起こしページから、ワンタップで台本をコピーできるようにします。最初に一度だけ登録してください。</p>
@@ -1641,7 +1808,7 @@ function startLesson(L) {
   view = { name: 'lesson', id: L.id };
   render();
   prepareAudio(L); unlock();
-  studyRun(0, 0);
+  runLesson(0, 0);
 }
 const ACTS = {
   home() { view = { name: 'home' }; render(); },
@@ -1677,10 +1844,10 @@ const ACTS = {
     if (!L) return toast('今日の分は完了しています');
     startLesson(L);
   },
-  stepGo(el) { const L = Store.get(view.id); stopStudy(); prepareAudio(L); unlock(); P.idx = 0; studyRun(+el.dataset.k, 0); },
+  stepGo(el) { const L = Store.get(view.id); stopStudy(); prepareAudio(L); unlock(); P.idx = 0; runLesson(+el.dataset.k, 0); },
   finish() { stopStudy(); openSheet(false); },
   sheetClose() { clearInterval(sheetTimer); view.sheet = false; render(); },
-  again() { clearInterval(sheetTimer); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); studyRun(0, 0); },
+  again() { clearInterval(sheetTimer); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); runLesson(0, 0); },
   sheetNext() { clearInterval(sheetTimer); const L = Store.get(view.id); goNext(L, completeLesson(L, 'done')); },
   sheetHard() { clearInterval(sheetTimer); const L = Store.get(view.id); completeLesson(L, 'again'); goNext(L, '明日もう一度出します'); },
   showEn() { view.show.en = !view.show.en; render(); },
@@ -1697,9 +1864,12 @@ const ACTS = {
     if (P.playing) return stopStudy();
     const L = Store.get(view.id);
     prepareAudio(L); unlock();
-    studyRun(view.step || 0, P.idx || 0);
+    runLesson(view.step || 0, P.idx || 0);
   },
-  speed(el) { view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length]; el.textContent = view.speed.toFixed(1) + '×'; },
+  speed(el) {
+    view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length]; el.textContent = view.speed.toFixed(1) + '×';
+    if (P.mix) mixEl.playbackRate = S.audioRate * view.speed;
+  },
   // ---- 型の編集
   flowEdit(el) {
     const fi = el.dataset.id ? S.flows.findIndex(f => f.id === el.dataset.id) : +el.dataset.fi;
