@@ -129,7 +129,7 @@ textarea{resize:vertical;line-height:1.45}
 .sprog{height:3px;max-width:688px;margin:0 auto 8px;background:var(--line);border-radius:99px;overflow:hidden}
 .sprog i{display:block;height:100%;width:0;background:var(--ok)}
 .sbar-row{max-width:688px;margin:0 auto;display:flex;gap:8px;align-items:center}
-.sbar-row button{min-width:52px;padding:12px 8px}
+.sbar-row button{min-width:44px;padding:12px 6px}
 .sbar-row .splay{flex:1;font-size:17px}
 .sbar-row button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 /* 記録画面 */
@@ -242,6 +242,21 @@ input[type=search]{font-size:16px}
 .xrow.on{background:var(--hl)}
 .xrow.on .xi::before{content:'⏸'}
 .arow .row select{flex:1;font-size:14px;padding:6px 8px}
+.lcal .lc{aspect-ratio:auto;min-height:58px;border-radius:8px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 0;background:var(--card);font-size:12px;line-height:1.15;position:relative}
+.lc.empty{background:transparent;border-color:transparent;color:var(--sub)}
+.lc .lcd{font-size:10px;color:var(--sub)}
+.lc b{font-size:15px}
+.lc small{font-size:9px;color:var(--sub)}
+.lc.new{background:var(--card)}
+.lc.done{background:color-mix(in srgb,var(--ok) 22%,var(--card));border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.lc.due{background:color-mix(in srgb,var(--accent) 22%,var(--card));border-color:var(--accent)}
+.lc.due small{color:var(--accent);font-weight:700}
+.lc.noaudio{border-style:dashed}
+.lc.today{outline:2px solid var(--accent);outline-offset:1px}
+.legend-row .lg{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.lg.new{background:var(--card)}
+.lg.done{background:color-mix(in srgb,var(--ok) 40%,var(--card))}
+.lg.due{background:color-mix(in srgb,var(--accent) 40%,var(--card))}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -839,6 +854,33 @@ const LIB_FILTERS = { all: 'すべて', fresh: '未学習', learning: '復習中
 function libMatch(l, f) {
   return f === 'fresh' ? !l.srs : f === 'learning' ? !!l.srs : f === 'due' ? isDue(l) : f === 'noaudio' ? !hasAudio(l) : true;
 }
+// カレンダー形式のレッスン表: 各日のマスにレッスン番号と状態(学習済み・今日の復習・未学習)
+function vLessonCalendar() {
+  const t = today(), withDate = Store.lessons.filter(l => l.date && l.sentences.length);
+  const months = [...new Set(withDate.map(monthOf))].sort();
+  const month = view.calM || (months.includes(t.slice(0, 7)) ? t.slice(0, 7) : months.at(-1) || t.slice(0, 7));
+  const [y, m] = month.split('-').map(Number), nDays = new Date(y, m, 0).getDate(), lead = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const idx = months.indexOf(month);
+  let cells = '<i></i>'.repeat(lead);
+  for (let k = 1; k <= nDays; k++) {
+    const d = `${month}-${String(k).padStart(2, '0')}`, ls = withDate.filter(l => l.date === d);
+    if (!ls.length) { cells += `<div class="lc empty"><span class="lcd">${k}</span></div>`; continue; }
+    const L = ls[0], st = isDue(L) ? 'due' : L.srs ? 'done' : 'new';
+    cells += `<button class="lc ${st}${hasAudio(L) ? '' : ' noaudio'}${d === t ? ' today' : ''}" data-act="open" data-id="${esc(L.id)}" aria-label="${m}月${k}日 ${esc(L.title)}">
+      <span class="lcd">${k}</span><b>${lessonNoOf(L) || '•'}</b><small>${st === 'due' ? '復習' : st === 'done' ? (L.srs.due ? `${+L.srs.due.slice(5, 7)}/${+L.srs.due.slice(8)}` : '済') : '未'}</small></button>`;
+  }
+  const inMonth = withDate.filter(l => monthOf(l) === month);
+  return `<section class="card">
+    <div class="calnav">
+      <button class="icon" data-act="lcMove" data-d="-1" ${idx <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
+      <h2>${y}年${m}月 <small>${inMonth.length}レッスン · 学習済み ${inMonth.filter(l => l.srs).length}</small></h2>
+      <button class="icon" data-act="lcMove" data-d="1" ${idx < 0 || idx >= months.length - 1 ? 'disabled' : ''} aria-label="次の月">›</button>
+    </div>
+    <div class="cal-h">${[...'月火水木金土日'].map(c => `<span>${c}</span>`).join('')}</div>
+    <div class="cal-g lcal">${cells}</div>
+    <div class="legend-row"><i class="lg new"></i>未学習 <i class="lg done"></i>学習済み(次の復習日) <i class="lg due"></i>今日の復習</div>
+  </section>`;
+}
 function vLibrary() {
   const f = view.filter || 'all';
   const ls = Store.lessons.filter(l => libMatch(l, f)).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
@@ -851,8 +893,12 @@ function vLibrary() {
     <span class="ld">${l.date ? `${+l.date.slice(5, 7)}/${+l.date.slice(8)}` : ''}</span>
     <span class="lt2">${esc(shortTitle(l.title))}</span>
     <span class="ls">${hasAudio(l) ? '🔊' : '🔈'} ${l.srs ? (isDue(l) ? '<b class="due">今日</b>' : fmtDue(l.srs.due)) : '<span class="nw">未学習</span>'}</span></button>`;
+  const tabs = `<div class="modes mini2"><button data-act="libMode" data-m="list" class="${view.libMode !== 'cal' ? 'on' : ''}">📋 一覧</button><button data-act="libMode" data-m="cal" class="${view.libMode === 'cal' ? 'on' : ''}">📅 カレンダー</button></div>`;
+  if (view.libMode === 'cal') return bar('<button class="icon" data-act="home">‹ ホーム</button>', 'すべてのレッスン', '<button class="icon plus" data-act="addMenu" aria-label="レッスンを追加">＋</button>') + `
+  <main class="wrap">${tabs}${vLessonCalendar()}</main>`;
   return bar('<button class="icon" data-act="home">‹ ホーム</button>', 'すべてのレッスン', '<button class="icon plus" data-act="addMenu" aria-label="レッスンを追加">＋</button>') + `
   <main class="wrap">
+    ${tabs}
     <input type="search" data-libq placeholder="🔍 タイトルで探す(例: 63、7月1日)" value="">
     <div class="chips">${Object.entries(LIB_FILTERS).map(([k, v]) => `<button class="chip ${f === k ? 'on' : ''}" data-act="libFilter" data-f="${k}">${v}</button>`).join('')}</div>
     ${groups.length ? groups.map(g => `<details class="mgroup" data-m="${g.m}" ${open.has(g.m) ? 'open' : ''}>
@@ -1095,8 +1141,9 @@ function attachFlowDrag() {
 const SPEEDS = [0.7, 0.8, 0.9, 1.0, 1.1];
 const P = { token: 0, idx: 0, playing: false }; // 学習画面の再生状態
 
-function stopStudy() {
+function stopStudy(keepMix) {
   stopExtra();
+  if (!keepMix) P.mix = null;
   P.token++; P.playing = false;
   finishSpeech?.(false); speechSynthesis.cancel(); audioEl.pause(); mixEl.pause();
   updateStudyBar();
@@ -1119,7 +1166,13 @@ function revealLine(i, k) {
 const lineRate = (L, s) => (segOf(L, s) ? S.audioRate : S.rate) * view.speed;
 const playLine = async (L, s) => {
   const seg = segOf(L, s);
-  if (seg && await ensureAudio(L)) return playSeg(seg, lineRate(L, s));
+  if (seg && await ensureAudio(L)) {
+    const r = await playSeg(seg, lineRate(L, s));
+    if (r.ok || r.ms > 400) return r;
+    await sleep(150); // iPhone で直前の読み上げのあとに音声が止められた場合など
+    const r2 = await playSeg(seg, lineRate(L, s));
+    if (r2.ok || r2.ms > 400) return r2;
+  }
   return speakOnce(s.en, voiceFor(L, s), 'en-US', S.rate * view.speed);
 };
 const estLine = (L, s) => { const seg = segOf(L, s); return seg ? (seg.e - seg.s) * 1000 / lineRate(L, s) : s.en.split(/\s+/).length * 400 / lineRate(L, s) + 300; };
@@ -1224,9 +1277,15 @@ function goNext(L, msg) {
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 const mixEl = new Audio(SILENT_WAV);
 mixEl.preservesPitch = mixEl.webkitPreservesPitch = true;
-const mixCache = new Map(); // lessonId → { key, url, timeline, dur }
+const mixCache = new Map(); // 'id,id,…' → { key, url, timeline, units, dur, ids }
 const canMix = L => !!S.bgPlay && hasAudio(L) && L.sentences.length > 0 && L.sentences.every(s => segOf(L, s));
-const mixKey = L => JSON.stringify([L.audio?.v, L.sentences.map(s => s.seg), studyPlan(L).map(p => p.id), S.repeatFactor, S.jaenFactor]);
+const mixKey = L => JSON.stringify([L.audio?.v, L.sentences.map(s => s.seg), studyPlan(L).map(p => p.id), S.repeatFactor, S.jaenFactor, S.beep]);
+// このレッスンから始めて、今日やる分を続けて1本にする(レッスンの切り替わりでもプログラムが要らないので、消灯中も途切れない)
+function sessionFor(L) {
+  const { reviews, fresh } = todayPlan(), list = [...reviews, ...fresh];
+  if (!list.some(l => l.id === L.id)) return [L];
+  return [L, ...list.filter(l => l.id !== L.id && canMix(l))].slice(0, 4);
+}
 
 function wavBlob(buf) {
   const d = buf.getChannelData(0), sr = buf.sampleRate, n = d.length, v = new DataView(new ArrayBuffer(44 + n * 2));
@@ -1237,37 +1296,43 @@ function wavBlob(buf) {
   for (let i = 0; i < n; i++) { const x = Math.max(-1, Math.min(1, d[i])); v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true); }
   return new Blob([v.buffer], { type: 'audio/wav' });
 }
-async function buildMix(L) {
-  const key = mixKey(L), old = mixCache.get(L.id);
+async function buildMix(Ls) {
+  const ids = Ls.map(l => l.id), ck = ids.join(','), key = Ls.map(mixKey).join('|'), old = mixCache.get(ck);
   if (old?.key === key) return old;
-  const rec = await idb.get('audio:' + L.id);
-  if (!rec) throw new Error('no audio');
-  // 1) 時間割を作る(何秒から何秒が、どのステップのどの文か)
-  const plan = studyPlan(L), ev = [], tones = [];
+  // 1) 時間割(何秒から何秒が、どのレッスンの・どのステップの・どの文か)
+  const ev = [], tones = [];
   let t = 0.4;
-  plan.forEach((p, k) => {
-    const d = stepDef(p.id);
-    tones.push({ t, step: true }); ev.push({ t0: t, k, i: -1, kind: 'step' }); t += 1.0;
-    L.sentences.forEach((s, i) => {
-      if (d.jaen && !s.ja) return;
-      const len = s.seg.e - s.seg.s;
-      if (d.jaen) { tones.push({ t }); ev.push({ t0: t, len: len * S.jaenFactor + 1.5, k, i, kind: 'think' }); t += len * S.jaenFactor + 1.5; }
-      ev.push({ t0: t, len, k, i, kind: 'play', seg: s.seg }); t += len;
-      if (d.repeat) { tones.push({ t }); ev.push({ t0: t, len: len * S.repeatFactor + 0.6, k, i, kind: 'turn' }); t += len * S.repeatFactor + 0.6; }
-      else t += (d.jaen ? 1200 : d.gap) / 1000;
+  Ls.forEach((L, li) => {
+    if (li) { tones.push({ t, lesson: true }); t += 1.6; }
+    ev.push({ t0: t, li, k: 0, i: -1, kind: 'lesson' });
+    studyPlan(L).forEach((p, k) => {
+      const d = stepDef(p.id);
+      tones.push({ t, step: true }); ev.push({ t0: t, li, k, i: -1, kind: 'step' }); t += 1.0;
+      L.sentences.forEach((s, i) => {
+        if (d.jaen && !s.ja) return;
+        const len = s.seg.e - s.seg.s;
+        if (d.jaen) { tones.push({ t }); ev.push({ t0: t, len: len * S.jaenFactor + 1.5, li, k, i, kind: 'think' }); t += len * S.jaenFactor + 1.5; }
+        ev.push({ t0: t, len, li, k, i, kind: 'play', seg: s.seg }); t += len;
+        if (d.repeat) { tones.push({ t }); ev.push({ t0: t, len: len * S.repeatFactor + 0.6, li, k, i, kind: 'turn' }); t += len * S.repeatFactor + 0.6; }
+        else t += (d.jaen ? 1200 : d.gap) / 1000;
+      });
     });
   });
   t += 0.6;
   // 2) 音を並べて1本にする
-  const SR = 22050, ctx = new OfflineAudioContext(1, Math.ceil(t * SR), SR);
-  const bytes = await rec.blob.arrayBuffer();
-  const src = await new Promise((res, rej) => { const q = ctx.decodeAudioData(bytes, res, rej); q?.catch?.(rej); });
+  const SR = 22050, ctx = new OfflineAudioContext(1, Math.ceil(t * SR), SR), bufs = [];
+  for (const L of Ls) {
+    const rec = await idb.get('audio:' + L.id);
+    if (!rec) throw new Error('no audio');
+    const bytes = await rec.blob.arrayBuffer();
+    bufs.push(await new Promise((res, rej) => { const q = ctx.decodeAudioData(bytes, res, rej); q?.catch?.(rej); }));
+  }
   for (const e of ev) if (e.kind === 'play') {
-    const n = ctx.createBufferSource(); n.buffer = src; n.connect(ctx.destination); n.start(e.t0, e.seg.s, e.seg.e - e.seg.s);
+    const n = ctx.createBufferSource(); n.buffer = bufs[e.li]; n.connect(ctx.destination); n.start(e.t0, e.seg.s, e.seg.e - e.seg.s);
   }
   for (const x of tones) {
-    const notes = x.step ? [[660, 0], [880, 0.18]] : [[880, 0]];
-    if (!x.step && !S.beep) continue;
+    if (!x.step && !x.lesson && !S.beep) continue;
+    const notes = x.lesson ? [[523, 0], [659, 0.16], [784, 0.32]] : x.step ? [[660, 0], [880, 0.18]] : [[880, 0]];
     for (const [f, dt] of notes) {
       const o = ctx.createOscillator(), g = ctx.createGain(), t0 = x.t + dt;
       o.frequency.value = f;
@@ -1277,12 +1342,14 @@ async function buildMix(L) {
   }
   const url = URL.createObjectURL(wavBlob(await ctx.startRendering()));
   if (old) URL.revokeObjectURL(old.url);
-  const res = { key, url, timeline: ev, dur: t };
-  mixCache.set(L.id, res);
-  if (mixCache.size > 4) { const [id, m] = mixCache.entries().next().value; if (id !== L.id) { URL.revokeObjectURL(m.url); mixCache.delete(id); } }
+  // 前後移動の行き先: 各文の始まり(日→英は「考える時間」の始まり)
+  const units = ev.filter((e, n) => e.kind === 'think' || (e.kind === 'play' && ev[n - 1]?.kind !== 'think'));
+  const res = { key, url, timeline: ev, units, dur: t, ids };
+  mixCache.set(ck, res);
+  while (mixCache.size > 3) { const [k2, m2] = mixCache.entries().next().value; if (k2 === ck) break; URL.revokeObjectURL(m2.url); mixCache.delete(k2); }
   return res;
 }
-const prebuild = L => { if (L && canMix(L)) buildMix(L).catch(() => {}); };
+const prebuild = L => { if (L && canMix(L)) buildMix(sessionFor(L)).catch(() => {}); };
 
 // 流れを再生する入り口: 1本の音声にできるならそれで、できなければ従来の方法で
 function runLesson(fromStep = 0, fromLine = 0) {
@@ -1292,33 +1359,43 @@ function runLesson(fromStep = 0, fromLine = 0) {
 }
 async function mixPlay(L, fromStep, fromLine) {
   stopStudy();
-  const tok = ++P.token;
+  const tok = ++P.token, Ls = sessionFor(L);
   P.playing = true; updateStudyBar();
-  const b = $('#splay'); if (b && !mixCache.get(L.id)) b.textContent = '準備中…';
+  const b = $('#splay'); if (b && !mixCache.get(Ls.map(l => l.id).join(','))) b.textContent = '準備中…';
   let m;
-  try { m = await buildMix(L); } catch (e) { console.error(e); if (P.token === tok) { P.playing = false; return studyRun(fromStep, fromLine); } return; }
+  try { m = await buildMix(Ls); } catch (e) { console.error(e); if (P.token === tok) { P.playing = false; return studyRun(fromStep, fromLine); } return; }
   if (P.token !== tok) return;
-  const e0 = m.timeline.find(e => e.k === fromStep && (e.kind === 'step' ? fromLine === 0 : e.i >= fromLine));
+  const e0 = m.timeline.find(e => e.li === 0 && e.k === fromStep && (e.kind === 'step' ? fromLine === 0 : e.i >= fromLine));
   if (mixEl.dataset.u !== m.url) { mixEl.src = m.url; mixEl.dataset.u = m.url; }
   mixEl.playbackRate = S.audioRate * view.speed;
-  P.mix = { id: L.id, m, lastCT: e0?.t0 || 0, step: -1 };
+  P.mix = { ids: m.ids, m, li: 0, lastCT: e0?.t0 || 0, step: -1, line: -1, done: new Set() };
   try { mixEl.currentTime = e0?.t0 || 0; await mixEl.play(); }
   catch { P.playing = false; P.mix = null; updateStudyBar(); return toast('再生を始められませんでした。もう一度 ▶ を押してください'); }
   setMediaSession(L);
   updateStudyBar();
-  prebuild(nextToday(L)); // 次のレッスンも先に用意しておく(消灯中に続けて流すため)
 }
 function mixEventAt(m, t) { let e = null; for (const x of m.timeline) { if (x.t0 <= t) e = x; else break; } return e; }
+// レッスンが切り替わったら、終わったレッスンを記録して、画面も次のレッスンへ
+function mixLessonChange(x, e) {
+  if (!e || e.li <= x.li) return;
+  for (let li = x.li; li < e.li; li++) if (!x.done.has(li)) { x.done.add(li); completeLesson(Store.get(x.ids[li]), 'done'); }
+  x.li = e.li; x.step = -1; x.line = -1;
+  const L = Store.get(x.ids[e.li]);
+  setMediaSession(L);
+  if (view.name === 'lesson') { P.idx = 0; view = { name: 'lesson', id: L.id }; if (document.visibilityState === 'visible') render(); }
+}
 function syncMixUI() { // 画面に、今流れている所を映す
   const x = P.mix;
-  if (!x || view.name !== 'lesson' || view.id !== x.id || document.visibilityState !== 'visible') return;
-  const L = Store.get(x.id), e = mixEventAt(x.m, mixEl.currentTime);
-  if (!e) return;
-  if (e.k !== view.step || x.step !== e.k) { x.step = e.k; x.line = -1; setStep(e.k, studyPlan(L)); }
+  if (!x) return;
+  const e = mixEventAt(x.m, mixEl.currentTime);
+  mixLessonChange(x, e);
+  if (!e || view.name !== 'lesson' || view.id !== x.ids[e.li] || document.visibilityState !== 'visible') return;
+  const L = Store.get(x.ids[e.li]), plan = studyPlan(L);
+  if (e.k !== view.step || x.step !== e.k) { x.step = e.k; x.line = -1; setStep(e.k, plan); }
   if (e.i >= 0) {
     if (x.line !== e.i) { x.line = e.i; P.idx = e.i; markLine(e.i); } // ステップの最初の行もハイライトする
     if (e.kind === 'think') revealLine(e.i, 'ja');
-    if (e.kind === 'play' && stepDef(studyPlan(L)[e.k]?.id).jaen) revealLine(e.i, 'en');
+    if (e.kind === 'play' && stepDef(plan[e.k]?.id).jaen) revealLine(e.i, 'en');
   }
   setStudyProg(e.kind === 'think' || e.kind === 'turn' ? (mixEl.currentTime - e.t0) / e.len : 0);
 }
@@ -1328,8 +1405,8 @@ mixEl.addEventListener('timeupdate', () => {
   const ct = mixEl.currentTime, d = ct - x.lastCT;
   x.lastCT = ct;
   if (d > 0 && d < 3600) { // 練習時間を記録(消灯中の分も、戻ったときにまとめて入る)
-    const e = mixEventAt(x.m, ct), L = Store.get(x.id), id = studyPlan(L)[e?.k ?? 0]?.id || 'listen';
-    if (Stats.add(d / (mixEl.playbackRate || 1), false, { lesson: x.id, modes: { [id]: d / (mixEl.playbackRate || 1) } })) toast('🏆 今日の目標を達成しました！');
+    const e = mixEventAt(x.m, ct), L = Store.get(x.ids[e?.li ?? 0]), id = studyPlan(L)[e?.k ?? 0]?.id || 'listen', sec = d / (mixEl.playbackRate || 1);
+    if (Stats.add(sec, false, { lesson: L.id, modes: { [id]: sec } })) toast('🏆 今日の目標を達成しました！');
   }
   syncMixUI();
 });
@@ -1347,35 +1424,45 @@ document.addEventListener('visibilitychange', () => { syncMixUI(); if (document.
 mixEl.addEventListener('ended', () => {
   const x = P.mix;
   if (!x) return;
-  const L = Store.get(x.id), nx = nextToday(L), nm = nx && mixCache.get(nx.id);
   P.mix = null; P.playing = false;
-  if (document.visibilityState !== 'visible' && nm && nm.key === mixKey(nx)) {
-    // 画面が消えているときは、記録して、用意してある次のレッスンをそのまま流す
-    completeLesson(L, 'done');
-    view = { name: 'lesson', id: nx.id, step: 0 };
-    P.idx = 0; P.mix = { id: nx.id, m: nm, lastCT: 0, step: -1 }; P.playing = true;
-    mixEl.src = nm.url; mixEl.dataset.u = nm.url; mixEl.currentTime = 0;
-    mixEl.play().then(() => setMediaSession(nx)).catch(() => { P.playing = false; P.mix = null; });
-    return;
+  const last = Store.get(x.ids.at(-1));
+  if (x.ids.length === 1 && view.name === 'lesson' && view.id === last.id && document.visibilityState === 'visible') {
+    view.step = 0; P.idx = 0; return openSheet(true); // 1レッスンだけのときは、いつもの終了画面
   }
-  if (view.name === 'lesson' && view.id === L.id) { view.step = 0; P.idx = 0; openSheet(true); }
-  else completeLesson(L, 'done');
+  for (let li = 0; li < x.ids.length; li++) if (!x.done.has(li)) completeLesson(Store.get(x.ids[li]), 'done');
+  if (document.visibilityState !== 'visible') return;
+  const nx = nextToday(last);
+  if (nx) { startLesson(nx); toast(`次は「${nx.title}」`); }
+  else { P.idx = 0; view = { name: 'home' }; render(); toast('🎉 今日の分は完了！'); }
 });
-// ロック画面の操作(再生・一時停止・前後のステップ)
+// 前の文・次の文へ(1本の音声のときは、その位置へ移動する)
+function jumpLine(dir) {
+  const x = P.mix;
+  if (x) {
+    const t = mixEl.currentTime, u = x.m.units;
+    let n = u.findLastIndex(e => e.t0 <= t + 0.01);
+    if (dir < 0) n = n >= 0 && t - u[n].t0 > 1.2 ? n : n - 1; else n += 1;
+    n = Math.max(0, Math.min(u.length - 1, n));
+    mixEl.currentTime = u[n].t0; x.line = -1;
+    return syncMixUI();
+  }
+  const L = Store.get(view.id), plan = studyPlan(L), N = L.sentences.length;
+  let k = view.step || 0, i = (P.idx || 0) + dir;
+  if (i >= N && k < plan.length - 1) { k++; i = 0; }
+  if (i < 0) i = 0;
+  stopStudy(); prepareAudio(L); unlock();
+  if (i < N) runLesson(k, i);
+}
+// ロック画面の操作(再生・一時停止・前後の文)
 function setMediaSession(L) {
   if (!('mediaSession' in navigator)) return;
   const ms = navigator.mediaSession;
   try { ms.metadata = new MediaMetadata({ title: shortTitle(L.title), artist: 'Shadowing Coach', album: flowOf(S[flowKey(L)])?.name || '', artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }] }); } catch {}
-  const jump = dir => {
-    const x = P.mix; if (!x) return;
-    const e = mixEventAt(x.m, mixEl.currentTime), k = Math.max(0, (e?.k ?? 0) + dir), t = x.m.timeline.find(v => v.k === k && v.kind === 'step');
-    if (t) mixEl.currentTime = t.t0;
-  };
   const set = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
   set('play', () => { if (P.mix) { mixEl.play(); P.playing = true; updateStudyBar(); } });
   set('pause', () => { mixEl.pause(); P.playing = false; updateStudyBar(); });
-  set('previoustrack', () => jump(-1));
-  set('nexttrack', () => jump(1));
+  set('previoustrack', () => jumpLine(-1));
+  set('nexttrack', () => jumpLine(1));
   set('seekbackward', d => { mixEl.currentTime = Math.max(0, mixEl.currentTime - (d?.seekOffset || 5)); });
   set('seekforward', d => { mixEl.currentTime = mixEl.currentTime + (d?.seekOffset || 5); });
 }
@@ -1401,7 +1488,8 @@ function vLesson() {
   return bar(`<button class="icon" data-act="lessonBack">‹ ${view.back ? '一覧' : 'ホーム'}</button>`, esc(L.title || '無題'), '<button class="icon" data-act="edit">編集</button>') + `
   <main class="wrap study-wrap">
     <p class="hint srsline">${L.srs ? `${isDue(L) ? '<b>今日が復習日</b>' : `次の復習 ${fmtDue(L.srs.due)}`} · 記憶の目安 ${retention(L)}%` : '新しいレッスン'}
-      · ${hasAudio(L) ? (nSeg === N ? '🔊 番組音声' : `🔊 番組音声(${nSeg}/${N}文)`) : '読み上げ音声'}</p>
+      · ${hasAudio(L) ? (nSeg === N ? '🔊 番組音声' : `🔊 番組音声(${nSeg}/${N}文)`) : '読み上げ音声'}
+      ${canMix(L) ? ' · 📴 画面を消しても再生' : S.bgPlay && hasAudio(L) ? ' · ⚠ 区切れていない文があるため、画面を消すと止まります' : ''}</p>
     ${L.audio?.missing ? `<div class="notice">⚠ この端末に番組音声のファイルがありません(Safari とホーム画面のアプリでは保存場所が別です)。いまは読み上げ音声で流れます。<button data-act="segs">音声を選び直す</button></div>`
       : !hasAudio(L) ? `<div class="notice">🔈 番組音声がまだ付いていないため、読み上げ音声で流れます。<button data-act="segs">番組音声を付ける</button></div>`
       : nSeg < N ? `<div class="notice">${N - nSeg}文が区切れていないため、その文は読み上げ音声になります。<button data-act="segs">区切りを確認</button></div>` : ''}
@@ -1428,8 +1516,10 @@ function vLesson() {
     <div class="sprog"><i id="sprog"></i></div>
     <div class="sbar-row">
       <button data-act="speed" aria-label="速さ">${view.speed.toFixed(1)}×</button>
+      <button data-act="prevLine" aria-label="前の文">⏮</button>
       <button class="primary splay" id="splay" data-act="studyPlay">▶ 始める</button>
-      <button data-act="finish" aria-label="完了して評価">✓ 完了</button>
+      <button data-act="nextLine" aria-label="次の文">⏭</button>
+      <button data-act="finish" aria-label="完了">✓</button>
     </div>
   </div>
   ${view.sheet ? rateSheet(L) : ''}`;
@@ -1817,8 +1907,14 @@ const ACTS = {
   open(el) { stopStudy(); P.idx = 0; view = { name: 'lesson', id: el.dataset.id, back: view.name === 'library' ? view : null }; render(); },
   lessonBack() { stopStudy(); view = view.back || { name: 'home' }; render(); },
   addMenu() { openAddSheet(); },
-  library() { view = { name: 'library' }; render(); },
+  library() { let m = 'list'; try { m = localStorage.getItem('sc.libMode') || 'list'; } catch {} view = { name: 'library', libMode: m }; render(); },
   libFilter(el) { view.filter = el.dataset.f; view.openMonths = null; render(); },
+  libMode(el) { view.libMode = el.dataset.m; try { localStorage.setItem('sc.libMode', el.dataset.m); } catch {} render(); },
+  lcMove(el) {
+    const months = [...new Set(Store.lessons.filter(l => l.date && l.sentences.length).map(monthOf))].sort();
+    const cur = view.calM || months.at(-1), i = months.indexOf(cur) + +el.dataset.d;
+    if (months[i]) { view.calM = months[i]; render(); }
+  },
   // 今日の項目は、開いたらすぐ型の流れで始める(タップ1回で練習開始)
   openToday(el) { startLesson(Store.get(el.dataset.id)); },
   aPreview(el) {
@@ -1846,6 +1942,8 @@ const ACTS = {
   },
   stepGo(el) { const L = Store.get(view.id); stopStudy(); prepareAudio(L); unlock(); P.idx = 0; runLesson(+el.dataset.k, 0); },
   finish() { stopStudy(); openSheet(false); },
+  prevLine() { jumpLine(-1); },
+  nextLine() { jumpLine(1); },
   sheetClose() { clearInterval(sheetTimer); view.sheet = false; render(); },
   again() { clearInterval(sheetTimer); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); runLesson(0, 0); },
   sheetNext() { clearInterval(sheetTimer); const L = Store.get(view.id); goNext(L, completeLesson(L, 'done')); },
@@ -1861,7 +1959,8 @@ const ACTS = {
     setTimeout(() => playLine(L, L.sentences[i]), 50);
   },
   studyPlay() {
-    if (P.playing) return stopStudy();
+    if (P.playing) return stopStudy(true); // 一時停止(1本の音声は位置を覚えておく)
+    if (P.mix && P.mix.ids[P.mix.li] === view.id && mixEl.src) { unlock(); P.playing = true; mixEl.play().then(updateStudyBar).catch(() => {}); return; }
     const L = Store.get(view.id);
     prepareAudio(L); unlock();
     runLesson(view.step || 0, P.idx || 0);
