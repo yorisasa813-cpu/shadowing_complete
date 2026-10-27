@@ -1277,9 +1277,11 @@ function goNext(L, msg) {
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
 const mixEl = new Audio(SILENT_WAV);
 mixEl.preservesPitch = mixEl.webkitPreservesPitch = true;
+const jaHash = t => { let h = 5381; for (const c of String(t)) h = ((h << 5) + h + c.codePointAt(0)) | 0; return (h >>> 0).toString(36); };
+const hasJaVoice = s => !!s.ja && s.jav === jaHash(s.ja); // Mac で作った日本語訳の音声が取り込まれているか
 const mixCache = new Map(); // 'id,id,…' → { key, url, timeline, units, dur, ids }
 const canMix = L => !!S.bgPlay && hasAudio(L) && L.sentences.length > 0 && L.sentences.every(s => segOf(L, s));
-const mixKey = L => JSON.stringify([L.audio?.v, L.sentences.map(s => s.seg), studyPlan(L).map(p => p.id), S.repeatFactor, S.jaenFactor, S.beep]);
+const mixKey = L => JSON.stringify([L.audio?.v, L.sentences.map(s => s.seg), L.sentences.map(s => (hasJaVoice(s) ? s.jav : 0)), studyPlan(L).map(p => p.id), S.repeatFactor, S.jaenFactor, S.beep, S.jaSpeak]);
 // このレッスンから始めて、今日やる分を続けて1本にする(レッスンの切り替わりでもプログラムが要らないので、消灯中も途切れない)
 function sessionFor(L) {
   const { reviews, fresh } = todayPlan(), list = [...reviews, ...fresh];
@@ -1300,7 +1302,18 @@ async function buildMix(Ls) {
   const ids = Ls.map(l => l.id), ck = ids.join(','), key = Ls.map(mixKey).join('|'), old = mixCache.get(ck);
   if (old?.key === key) return old;
   // 1) 時間割(何秒から何秒が、どのレッスンの・どのステップの・どの文か)
-  const ev = [], tones = [];
+  // 日本語訳の音声(Mac で作って取り込んだもの)を先に読み込む
+  const SR = 22050, pre = new OfflineAudioContext(1, 1, SR), jaBufs = new Map();
+  if (S.jaSpeak) for (const L of Ls) {
+    if (!studyPlan(L).some(p => p.id === 'jaen')) continue;
+    for (let i = 0; i < L.sentences.length; i++) {
+      if (!hasJaVoice(L.sentences[i])) continue;
+      const rec = await idb.get(`jav:${L.id}:${i}`).catch(() => null);
+      if (!rec) continue;
+      try { const b = await rec.blob.arrayBuffer(); jaBufs.set(`${L.id}:${i}`, await new Promise((res, rej) => { const q = pre.decodeAudioData(b, res, rej); q?.catch?.(rej); })); } catch {}
+    }
+  }
+  const ev = [], tones = [], jaPlays = [];
   let t = 0.4;
   Ls.forEach((L, li) => {
     if (li) { tones.push({ t, lesson: true }); t += 1.6; }
@@ -1311,7 +1324,12 @@ async function buildMix(Ls) {
       L.sentences.forEach((s, i) => {
         if (d.jaen && !s.ja) return;
         const len = s.seg.e - s.seg.s;
-        if (d.jaen) { tones.push({ t }); ev.push({ t0: t, len: len * S.jaenFactor + 1.5, li, k, i, kind: 'think' }); t += len * S.jaenFactor + 1.5; }
+        if (d.jaen) {
+          const jb = jaBufs.get(`${L.id}:${i}`), jd = jb ? jb.duration + 0.3 : 0; // 日本語訳を流してから、考える時間
+          if (jb) jaPlays.push({ t, buf: jb });
+          tones.push({ t: t + jd }); ev.push({ t0: t, len: jd + len * S.jaenFactor + 1.5, li, k, i, kind: 'think', jaAudio: !!jb });
+          t += jd + len * S.jaenFactor + 1.5;
+        }
         ev.push({ t0: t, len, li, k, i, kind: 'play', seg: s.seg }); t += len;
         if (d.repeat) { tones.push({ t }); ev.push({ t0: t, len: len * S.repeatFactor + 0.6, li, k, i, kind: 'turn' }); t += len * S.repeatFactor + 0.6; }
         else t += (d.jaen ? 1200 : d.gap) / 1000;
@@ -1320,13 +1338,14 @@ async function buildMix(Ls) {
   });
   t += 0.6;
   // 2) 音を並べて1本にする
-  const SR = 22050, ctx = new OfflineAudioContext(1, Math.ceil(t * SR), SR), bufs = [];
+  const ctx = new OfflineAudioContext(1, Math.ceil(t * SR), SR), bufs = [];
   for (const L of Ls) {
     const rec = await idb.get('audio:' + L.id);
     if (!rec) throw new Error('no audio');
     const bytes = await rec.blob.arrayBuffer();
     bufs.push(await new Promise((res, rej) => { const q = ctx.decodeAudioData(bytes, res, rej); q?.catch?.(rej); }));
   }
+  for (const j of jaPlays) { const n = ctx.createBufferSource(); n.buffer = j.buf; n.connect(ctx.destination); n.start(j.t); }
   for (const e of ev) if (e.kind === 'play') {
     const n = ctx.createBufferSource(); n.buffer = bufs[e.li]; n.connect(ctx.destination); n.start(e.t0, e.seg.s, e.seg.e - e.seg.s);
   }
@@ -1395,6 +1414,13 @@ function syncMixUI() { // 画面に、今流れている所を映す
   if (e.i >= 0) {
     if (x.line !== e.i) { x.line = e.i; P.idx = e.i; markLine(e.i); } // ステップの最初の行もハイライトする
     if (e.kind === 'think') revealLine(e.i, 'ja');
+    // 日→英: 画面がついているときは、考える時間に入ったら一時停止して日本語訳を読み上げ、終わったら続きを流す
+    const said = `${e.li}:${e.k}:${e.i}`;
+    if (e.kind === 'think' && !e.jaAudio && S.jaSpeak && x.said !== said && L.sentences[e.i]?.ja) {
+      x.said = said;
+      mixEl.pause();
+      speakOnce(L.sentences[e.i].ja, jaVoice(), 'ja-JP', 1.05).then(() => { if (P.mix === x && P.playing) mixEl.play().catch(() => {}); });
+    }
     if (e.kind === 'play' && stepDef(plan[e.k]?.id).jaen) revealLine(e.i, 'en');
   }
   setStudyProg(e.kind === 'think' || e.kind === 'turn' ? (mixEl.currentTime - e.t0) / e.len : 0);
@@ -1602,7 +1628,13 @@ function vSettings() {
       ${chk('announce', 'ステップの名前を音声で案内する')}
       ${chk('beep', '「あなたの番」でビープ音を鳴らす')}
       ${chk('bgPlay', '画面を消しても再生を続ける(番組音声のレッスン)')}
-      <p class="hint">オンのときは、練習の流れを1本の音声にしてから再生します。ステップの案内は合図の音になり、日→英の日本語の読み上げは入りません。</p>
+      <p class="hint">オンのときは、練習の流れを1本の音声にしてから再生します。ステップの案内は合図の音になります。日→英の日本語訳は、画面がついているときだけ読み上げます(消灯中は読み上げません)。</p>
+    </section>
+    <section class="card"><h2>日本語訳の音声(画面を消した日→英用)</h2>
+      <p class="hint">Mac の読み上げで日本語訳を音声にして取り込むと、画面を消していても日→英で日本語訳が流れます。無料です。</p>
+      <p class="hint">まだ音声がない訳: <b>${jaVoiceTargets().length}文</b></p>
+      <button data-act="jaExport">① Mac 用に書き出す(AirDrop で Mac へ送る)</button>
+      <p class="hint">② Mac で「Shadowing Coach」フォルダの「<b>日本語音声を作る.command</b>」をダブルクリック → ダウンロードに <b>shadowing-ja-voices.zip</b> ができます<br>③ その zip を AirDrop で iPhone に送り、「＋」→「🔊 音声をまとめて割り当て」で選ぶ</p>
     </section>
     <section class="card"><h2>サイトから取り込む(ブックマークレット)</h2>
       <p class="hint">noteやブログの書き起こしページから、ワンタップで台本をコピーできるようにします。最初に一度だけ登録してください。</p>
@@ -2041,6 +2073,7 @@ const ACTS = {
     Store.lessons = Store.lessons.filter(x => x !== L);
     if (L.audio) await removeAudio(L);
     else await removeExtras(L);
+    for (let i = 0; i < L.sentences.length; i++) if (L.sentences[i].jav) await idb.del(`jav:${L.id}:${i}`).catch(() => {});
     await Store.save();
     view = { name: 'home' }; render();
   },
@@ -2113,6 +2146,7 @@ const ACTS = {
     view.dirty = true; render();
   },
   backup: exportBackup,
+  jaExport: exportJaRequest,
   records() { view = { name: 'records', sel: today() }; render(); },
   calMove(el) {
     const [y, m] = (view.month || today().slice(0, 7)).split('-').map(Number), dt = new Date(y, m - 1 + +el.dataset.d, 1);
@@ -2412,6 +2446,16 @@ let previewUrl = null;
 async function startAssign(fileList) {
   const picked = [...fileList], items = [];
   toast('音声ファイルを調べています…');
+  // Mac で作った日本語訳の音声の zip(中に manifest.json がある)なら、そちらとして取り込む
+  for (const f of picked) {
+    if (!/\.zip$/i.test(f.name) && !/zip/.test(f.type)) continue;
+    try {
+      const ents = await zipEntries(f), mf = ents.find(e => e.name.split('/').pop() === 'manifest.json');
+      if (!mf) continue;
+      const manifest = JSON.parse(await (await zipRead(f, mf)).text());
+      if (manifest.kind === 'ja-voices') return importJaVoices(f, ents, manifest);
+    } catch {}
+  }
   for (const f of picked) {
     if (/\.zip$/i.test(f.name) || /zip/.test(f.type)) {
       try {
@@ -2517,6 +2561,41 @@ function vAssign() {
       <select data-assign="${i}"><option value="">(割り当てない)</option>${opts.map(l => `<option value="${esc(l.id)}" ${v.pairs[i] === l.id ? 'selected' : ''}>${esc(l.title)}${hasAudio(l) ? '(音声あり・置き換え)' : ''}</option>`).join('')}</select></div>`).join('')}
     <button class="primary block" data-act="doAssign" ${v.busy ? 'disabled' : ''}>${v.busy ? '割り当てています…' : '割り当てる'}</button>
   </main>`;
+}
+
+// ================================================================ 日本語訳の音声(Mac の読み上げで作る)
+// iPhone の読み上げは消灯中に動かないので、Mac で音声ファイルにしてから取り込み、1本の音声に入れる
+function jaVoiceTargets() {
+  const out = [];
+  for (const L of Store.lessons) {
+    if (!hasAudio(L)) continue;
+    L.sentences.forEach((s, i) => { if (s.ja && !hasJaVoice(s)) out.push({ id: L.id, i, ja: s.ja, h: jaHash(s.ja) }); });
+  }
+  return out;
+}
+async function exportJaRequest() {
+  const items = jaVoiceTargets();
+  if (!items.length) return toast('音声を作る必要がある訳はありません(すべて作成済みです)');
+  const name = `shadowing-ja-request-${today()}.json`;
+  const blob = new Blob([JSON.stringify({ app: 'shadowing-coach', kind: 'ja-request', items })], { type: 'application/json' });
+  const file = new File([blob], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function importJaVoices(file, entries, manifest) {
+  const byName = new Map(entries.map(e => [e.name.split('/').pop(), e]));
+  let n = 0, stale = 0;
+  for (let k = 0; k < manifest.items.length; k++) {
+    const it = manifest.items[k], L = Store.get(it.id), s = L?.sentences[it.i], en = byName.get(it.file);
+    if (k % 20 === 0) toast(`日本語訳の音声を取り込んでいます… ${k + 1}/${manifest.items.length}`);
+    if (!s || !en || jaHash(s.ja) !== it.h) { stale++; continue; } // 訳が書き換わっていたら使わない
+    await idb.set(`jav:${L.id}:${it.i}`, { blob: await zipRead(file, en) });
+    s.jav = it.h; n++;
+  }
+  await Store.save();
+  view = { name: 'home' }; render();
+  toast(`日本語訳の音声を ${n}文ぶん取り込みました${stale ? `(訳が変わっていた ${stale}文は使っていません)` : ''}。画面を消しても日→英で流れます`);
 }
 
 // ================================================================ bookmarklet
