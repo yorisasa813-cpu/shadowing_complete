@@ -447,7 +447,9 @@ function dialogueSection(rawLines) {
 }
 const splitRaw = text => String(text).split(/\r?\n/).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
 const hasDialogue = text => !!dialogueSection(splitRaw(text));
-const isReviewClip = text => !hasDialogue(text) && /Lesson\s*\d+\s*REVIEW|復習回/i.test(text);
+const isFriday = d => /^\d{4}-\d{2}-\d{2}$/.test(d || '') && new Date(d + 'T12:00').getDay() === 5;
+// 金曜の復習回の記事か(タイトルに日付があれば金曜日のものだけ)
+const isReviewClip = (text, title = '') => !hasDialogue(text) && /Lesson\s*\d+\s*REVIEW|復習回/i.test(text) && (!dateFromTitle(title) || isFriday(dateFromTitle(title)));
 
 // 取り込み用ブックマークレットが付ける見出し
 const CLIP_HEAD = '【Shadowing取り込み】';
@@ -2071,10 +2073,7 @@ const ACTS = {
   async del() {
     const L = Store.get(view.id);
     if (!confirm(`「${L.title}」を削除しますか？`)) return;
-    Store.lessons = Store.lessons.filter(x => x !== L);
-    if (L.audio) await removeAudio(L);
-    else await removeExtras(L);
-    for (let i = 0; i < L.sentences.length; i++) if (L.sentences[i].jav) await idb.del(`jav:${L.id}:${i}`).catch(() => {});
+    await removeLesson(L);
     await Store.save();
     view = { name: 'home' }; render();
   },
@@ -2273,7 +2272,7 @@ function handleClipText(text, targetId) {
   const clips = parseClips(text);
   if (clips.length > 1) return importBundle(clips);
   const c = clips[0];
-  if (isReviewClip(c.raw)) return toast('金曜の復習回は会話の本文(DIALOGUE)がないので取り込みません。月〜木の回を取り込んでください');
+  if (isReviewClip(c.raw, c.title)) return toast('金曜の復習回は会話の本文(DIALOGUE)がないので取り込みません。月〜木の回を取り込んでください');
   const rows = parseScript(c.raw);
   const base = target
     ? { id: target.id, title: target.title, date: target.date || '', url: target.url || '' }
@@ -2313,7 +2312,7 @@ async function importBundle(clips) {
     if (!hasDialogue(c.raw)) { // 金曜の復習回など、DIALOGUE がない記事
       noDlg++;
       const old = c.url && Store.lessons.find(x => x.url === c.url);
-      if (old && !old.srs && !hasAudio(old)) Store.lessons = Store.lessons.filter(x => x !== old);
+      if (old && isReviewClip(c.raw, c.title) && isFriday(old.date)) await removeLesson(old);
       continue;
     }
     const rows = parseScript(c.raw);
@@ -2393,7 +2392,7 @@ const titleNo = l => +(String(l.title).match(/[(（](\d{1,3})[)）]/)?.[1] || 0)
 const wdIdx = d => { const n = Math.round((Date.parse(d) - Date.parse('2000-01-03')) / 864e5); return Math.floor(n / 7) * 5 + Math.min(n % 7, 5); };
 let noCache = { key: '', map: new Map() };
 function lessonNoOf(l) {
-  const ls = Store.lessons.filter(x => titleNo(x) && /^\d{4}-\d{2}-\d{2}$/.test(x.date || ''));
+  const ls = Store.lessons.filter(x => titleNo(x) && /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && new Date(x.date + 'T12:00').getDay() % 6); // 土日の日付は対象外
   const key = ls.map(x => x.id + x.title + x.date).join('|');
   if (noCache.key !== key) {
     const map = new Map();
@@ -2402,7 +2401,8 @@ function lessonNoOf(l) {
       for (const y of ls) if (Math.abs(Date.parse(y.date) - Date.parse(x.date)) <= 10 * 864e5) { const o = titleNo(y) - wdIdx(y.date); cnt.set(o, (cnt.get(o) || 0) + 1); }
       const own = titleNo(x) - wdIdx(x.date), top = Math.max(...cnt.values());
       const o = cnt.get(own) === top ? own : [...cnt].find(([, c]) => c === top)[0];
-      map.set(x.id, top >= 2 ? wdIdx(x.date) + o : titleNo(x));
+      // 年度の切り替わりや休止の前後では両側が同じくらいの数になるので、はっきり少数派のときだけ直す
+      map.set(x.id, o !== own && top >= 3 && top >= (cnt.get(own) || 0) + 2 ? wdIdx(x.date) + o : titleNo(x));
     }
     noCache = { key, map };
   }
@@ -2530,15 +2530,16 @@ async function startAssign(fileList) {
     if (!byNo && g < 0 && dIdx[0] >= 0) g = 0;
     if (g >= 0) extras[g].push({ name: it.name, title: it.tags.TIT2 || '', get: it.get });
   });
-  const used = new Set();
+  const used = new Set(); // 同じ番号の別の年のレッスンに付かないよう、zip の名前の月に絞る
+  const zipMonths = new Set(picked.map(f => f.name.match(/_(\d{2})(\d{2})[a-z]?_/)).filter(Boolean).map(m => `20${m[1]}-${m[2]}`));
   const pairs = dlg.map(it => {
     const n = trackNo(it), d = trackDate(it);
-    const cand = Store.lessons.filter(l => !used.has(l.id) && l.sentences.length && ((d && l.date?.endsWith(d)) || (n && lessonNoOf(l) === n)));
+    const cand = Store.lessons.filter(l => !used.has(l.id) && l.sentences.length && (!zipMonths.size || zipMonths.has(monthOf(l))) && ((d && l.date?.endsWith(d)) || (n && lessonNoOf(l) === n)));
     const L = cand.find(l => d && l.date?.endsWith(d)) || cand.sort(byDate)[0];
     if (L) used.add(L.id);
     return L?.id || '';
   });
-  const rest = Store.lessons.filter(l => l.sentences.length && !hasAudio(l) && !used.has(l.id)).sort(byDate);
+  const rest = Store.lessons.filter(l => l.sentences.length && !hasAudio(l) && !used.has(l.id) && (!zipMonths.size || zipMonths.has(monthOf(l)))).sort(byDate);
   // 番号も日付も分からないものだけ、日付の古い順に(番号があるのに合うレッスンがないときは割り当てない)
   pairs.forEach((p, i) => { if (!p && !trackNo(dlg[i]) && !trackDate(dlg[i]) && rest.length) pairs[i] = rest.shift().id; });
   // タグ部分を取り除いて音声だけにする(端末の音声デコーダーが確実に読めるように)
@@ -2674,6 +2675,16 @@ x.onclick=()=>box.remove();
 box.append(msg,ta,x);document.body.append(box);
 })()`.replace(/\n/g, ''));
 
+async function removeLesson(L) {
+  Store.lessons = Store.lessons.filter(x => x !== L);
+  await removeAudio(L);
+  for (let i = 0; i < L.sentences.length; i++) if (L.sentences[i].jav) await idb.del(`jav:${L.id}:${i}`).catch(() => {});
+}
+// 以前の版で取り込まれた金曜の復習回(DIALOGUE がなく、番組の進行やクイズが台本になっている)を見分ける
+const REVIEW_LINE = /let's review this week|here's the question|choices are|^question\b|listening challenge|review time/i;
+const isReviewLesson = L => isFriday(L.date)
+  && L.sentences.filter(s => REVIEW_LINE.test(s.en)).length >= 3;
+
 // ================================================================ backup
 async function exportBackup() {
   const name = `shadowing-backup-${today()}.json`;
@@ -2710,6 +2721,9 @@ async function restoreBackup(file) {
   await Store.load();
   await Stats.load();
   let changed = false;
+  const reviews = Store.lessons.filter(isReviewLesson);
+  for (const L of reviews) await removeLesson(L);
+  if (reviews.length) { changed = true; setTimeout(() => toast(`金曜の復習回 ${reviews.length}件を外しました(会話の本文がなく、違う台本になっていたため)`), 800); }
   for (const L of Store.lessons) {
     if (!L.audio) continue;
     const has = !!(await idb.get('audio:' + L.id).catch(() => null));
