@@ -116,6 +116,8 @@ textarea{resize:vertical;line-height:1.45}
 .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chip{padding:5px 14px;border-radius:99px;font-size:13px}
+.thinkctl{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.thinkctl b{min-width:3.2em;text-align:center}
 .chip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .slines{display:flex;flex-direction:column;gap:6px}
 .sline{text-align:left;display:flex;flex-direction:column;gap:3px;padding:12px 14px;transition:background .2s,border-color .2s}
@@ -735,6 +737,7 @@ function playSeg(seg, rate) {
 }
 
 let actx = null, unlocked = false;
+let mixPrimeTok = 0;
 function unlock() { // iOS: 最初の音声はタップ操作の中で鳴らす必要がある
   try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume?.(); } catch {}
   if (!unlocked) { try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch {} unlocked = true; }
@@ -742,7 +745,10 @@ function unlock() { // iOS: 最初の音声はタップ操作の中で鳴らす�
     audioEl.muted = true;
     primeP = audioEl.play().then(() => audioEl.pause()).catch(() => {}).finally(() => { audioEl.muted = false; });
   }
-  if (mixEl.paused && !P.mix) { mixEl.muted = true; mixEl.play().then(() => mixEl.pause()).catch(() => {}).finally(() => { mixEl.muted = false; }); }
+  if (mixEl.paused && !P.mix) { // 練習の再生が先に始まったら、この準備の一時停止はしない(タブを押しても鳴らない原因だった)
+    const t = ++mixPrimeTok; mixEl.muted = true;
+    mixEl.play().then(() => { if (t === mixPrimeTok) mixEl.pause(); }).catch(() => {}).finally(() => { if (t === mixPrimeTok) mixEl.muted = false; });
+  }
 }
 function beep() {
   if (!S.beep || !actx) return;
@@ -1246,7 +1252,7 @@ async function studyRun(fromStep = 0, fromLine = 0) {
     keepAwake(false);
   }
 }
-let sheetTimer = null;
+let sheetTimer = null, thinkTimer = null;
 function openSheet(finished) {
   const L = Store.get(view.id), nx = nextToday(L);
   if (nx) loadAudioUrl(nx).catch(() => {}); // 次のレッスンをすぐ始められるように
@@ -1391,6 +1397,7 @@ async function mixPlay(L, fromStep, fromLine) {
   if (mixEl.dataset.u !== m.url) { mixEl.src = m.url; mixEl.dataset.u = m.url; }
   mixEl.playbackRate = S.audioRate * view.speed;
   P.mix = { ids: m.ids, m, li: 0, lastCT: e0?.t0 || 0, step: -1, line: -1, done: new Set() };
+  mixPrimeTok++; mixEl.muted = false; // 準備の再生(unlock)があとから止めたり消音したりしないように
   try { mixEl.currentTime = e0?.t0 || 0; await mixEl.play(); }
   catch { P.playing = false; P.mix = null; updateStudyBar(); return toast('再生を始められませんでした。もう一度 ▶ を押してください'); }
   setMediaSession(L);
@@ -1533,6 +1540,7 @@ function vLesson() {
       <button class="chip ${sh.ja ? 'on' : ''}" data-act="showJa" ${noJa ? 'disabled' : ''}>訳</button>
       <span class="hint">行をタップ: その文だけ再生</span>
     </div>
+    ${d.jaen ? `<div class="thinkctl"><span class="hint">英文が出るまで</span><button class="sm" data-act="think" data-d="-1" aria-label="短く">−</button><b id="thinkv">${S.jaenFactor.toFixed(1)}倍</b><button class="sm" data-act="think" data-d="1" aria-label="長く">＋</button><span class="hint">(英文の長さ×)</span></div>` : ''}
     <div class="slines">${L.sentences.map((s, i) => `<button class="sline" data-act="line" data-i="${i}">
       ${s.speaker ? `<span class="spk">${esc(s.speaker)}</span>` : ''}${txt('en', i, s.en)}${s.ja ? txt('ja', i, s.ja) : ''}</button>`).join('')}</div>
     ${L.extras?.length ? `<details class="extras"><summary>🎧 その他の音声 <small>${L.extras.length}個 · 解説・語句など(練習の流れには入りません)</small></summary>
@@ -1625,7 +1633,7 @@ function vSettings() {
     <section class="card"><h2>トレーニング</h2>
       ${range('audioRate', '番組音声の速さ', 0.5, 1.5, 0.05, v => v.toFixed(2) + '×')}
       ${range('repeatFactor', 'リピーティングで話す時間(音声の長さ×)', 0.8, 3, 0.1, v => v.toFixed(1) + '倍')}
-      ${range('jaenFactor', '日→英で考える時間(英文の長さ×)', 1, 4, 0.1, v => v.toFixed(1) + '倍')}
+      ${range('jaenFactor', '日→英で考える時間(英文の長さ×)', 0.4, 4, 0.1, v => v.toFixed(1) + '倍')}
       ${chk('repeatShowEn', 'リピーティング中も英文を表示する')}
       ${chk('jaSpeak', '日→英で日本語訳を読み上げる')}
       ${chk('announce', 'ステップの名前を音声で案内する')}
@@ -1999,6 +2007,19 @@ const ACTS = {
     const L = Store.get(view.id);
     prepareAudio(L); unlock();
     runLesson(view.step || 0, P.idx || 0);
+  },
+  // 日→英で英文が出るまでの時間(考える時間)をその場で変える。1本の音声で流しているときは作り直して、今の文から続ける
+  think(el) {
+    S.jaenFactor = Math.max(0.4, Math.min(4, Math.round((S.jaenFactor + 0.2 * +el.dataset.d) * 10) / 10));
+    saveSettings();
+    const v = $('#thinkv'); if (v) v.textContent = S.jaenFactor.toFixed(1) + '倍';
+    clearTimeout(thinkTimer);
+    thinkTimer = setTimeout(() => {
+      const L = Store.get(view.id);
+      if (!P.mix || !P.playing || !L) return; // 読み上げ方式のときは次の文から自動で反映される
+      const id = L.id;
+      buildMix(sessionFor(L)).then(() => { if (P.mix && P.playing && view.id === id) runLesson(view.step || 0, P.idx || 0); }).catch(() => {});
+    }, 700);
   },
   speed(el) {
     view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length]; el.textContent = view.speed.toFixed(1) + '×';
