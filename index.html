@@ -51,7 +51,7 @@ textarea{resize:vertical;line-height:1.45}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .row{display:flex;gap:8px}
 .row button{flex:none}
-.hint{margin:0;font-size:12px;color:var(--sub);line-height:1.5}
+.hint{margin:0;font-size:13px;color:var(--sub);line-height:1.5}
 .erow{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
 .erow-h{display:flex;gap:6px;align-items:center}
 .erow-h span{width:26px;color:var(--sub);font-size:13px}
@@ -81,6 +81,9 @@ textarea{resize:vertical;line-height:1.45}
 .srow-c .tm{font-variant-numeric:tabular-nums;min-width:112px;color:var(--ink)}
 .srow.none .tm{color:var(--danger)}
 .srow-c .lbl{margin-left:6px}
+/* 区切りの微調整: 押しやすい大きさにして2段に分ける(1段目 ▶・始−＋・終−＋ / 2段目 時間・始=今・終=今) */
+.srow-c .sm{min-width:44px;min-height:44px;padding:6px 8px}
+.srow-c2 .sm{flex:1}
 .tq{display:flex;gap:8px;align-items:center;text-align:left;font-size:14px;padding:8px 10px}
 .tq span:nth-child(2){flex:1}
 .tq small{color:var(--sub);font-size:11px}
@@ -100,7 +103,13 @@ textarea{resize:vertical;line-height:1.45}
 /* home: 今日やること */
 .today-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .today-h h2{font-size:18px}
-.mini{font-size:13px;color:var(--sub);border:0;background:none;padding:4px 0}
+.recent .rrow{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+.recent .rrow .tt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.recent .rrow .tt b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent .rrow .tt small{font-size:12px;color:var(--sub)}
+.recent .rrow button{flex:none;min-height:44px;padding:8px 12px;font-size:14px}
+.recent .today-h .mini{color:var(--accent);min-width:44px}
+.mini{font-size:13px;color:var(--sub);border:0;background:none;padding:4px 0;min-height:44px}
 .goalbar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:-4px}
 .goalbar i{display:block;height:100%;background:var(--ok)}
 .titem{display:flex;align-items:center;gap:10px;text-align:left;padding:12px}
@@ -110,14 +119,15 @@ textarea{resize:vertical;line-height:1.45}
 .chev{font-size:22px;color:var(--sub)}
 .empty small{font-size:12px}
 /* 学習画面 */
-.study-wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
+.study-wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 176px)} /* 下の操作バー(現在地の行・速さの列を含む)に隠れないように */
 .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--line);padding:4px;border-radius:12px}
 .modes button{border:0;background:none;padding:9px 2px;font-size:14px;font-weight:600;color:var(--sub);border-radius:9px}
 .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.chip{padding:5px 14px;border-radius:99px;font-size:13px}
+.chip{padding:5px 16px;border-radius:99px;font-size:13px;min-height:44px}
 .thinkctl{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
 .thinkctl b{min-width:3.2em;text-align:center}
+.thinkctl .sm{min-width:44px;min-height:44px;font-size:16px}
 .chip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .slines{display:flex;flex-direction:column;gap:6px}
 .sline{text-align:left;display:flex;flex-direction:column;gap:3px;padding:12px 14px;transition:background .2s,border-color .2s}
@@ -128,10 +138,15 @@ textarea{resize:vertical;line-height:1.45}
 .more button{display:flex;flex-direction:column;gap:2px;font-size:14px;font-weight:600}
 .more small{font-size:11px;font-weight:400;color:var(--sub)}
 .sbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 16px calc(env(safe-area-inset-bottom) + 10px)}
-.sprog{height:3px;max-width:688px;margin:0 auto 8px;background:var(--line);border-radius:99px;overflow:hidden}
+.sprog{height:3px;max-width:688px;margin:0 auto 6px;background:var(--line);border-radius:99px;overflow:hidden}
+.sstat{max-width:688px;margin:0 auto 6px;font-size:13px;line-height:1.5;color:var(--sub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spdrow{max-width:688px;margin:0 auto 8px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.spdrow[hidden]{display:none}
+.spdrow button{min-height:44px;padding:8px 2px;font-size:15px;font-variant-numeric:tabular-nums}
+.spdrow button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
 .sprog i{display:block;height:100%;width:0;background:var(--ok)}
 .sbar-row{max-width:688px;margin:0 auto;display:flex;gap:8px;align-items:center}
-.sbar-row button{min-width:44px;padding:12px 6px}
+.sbar-row button{min-width:44px;padding:12px 6px;white-space:nowrap}
 .sbar-row .splay{flex:1;font-size:17px}
 .sbar-row button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 /* 記録画面 */
@@ -203,10 +218,12 @@ textarea{resize:vertical;line-height:1.45}
 .flowbar{display:flex;flex-direction:column;gap:8px}
 .steppills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .steppills::-webkit-scrollbar{display:none}
-.pill{flex:none;font-size:13px;padding:6px 12px;border-radius:99px;white-space:nowrap}
+.pill{flex:none;font-size:13px;padding:6px 14px;border-radius:99px;white-space:nowrap;min-height:44px}
 .pill.cur{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
 .flowmeta{display:flex;gap:6px;align-items:center}
-.flowmeta select{flex:1;padding:6px 10px;font-size:14px}
+.flowmeta select{flex:1;padding:6px 10px;font-size:14px;min-height:44px}
+.flowmeta .sm{min-width:44px;min-height:44px}
+.hint.stepdesc{font-size:14px}
 .sheet-bg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.4)}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:10px;max-width:720px;margin:0 auto;box-shadow:0 -8px 30px rgba(0,0,0,.25);animation:up .2s ease-out}
 .sheet h2{font-size:18px}
@@ -259,8 +276,9 @@ input[type=search]{font-size:16px}
 .lg.new{background:var(--card)}
 .lg.done{background:color-mix(in srgb,var(--ok) 40%,var(--card))}
 .lg.due{background:color-mix(in srgb,var(--accent) 40%,var(--card))}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 124px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+body:has(.spdrow:not([hidden])) #toast{bottom:calc(env(safe-area-inset-bottom) + 180px)} /* 速さの列を開いているときは、その上に出す */
 </style>
 </head>
 <body>
@@ -284,6 +302,7 @@ const DEFAULTS = {
   rate: 0.95, audioRate: 1.0, enVoice: '', enVoice2: '', jaVoice: '',
   repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true, bgPlay: true,
   goalMin: 15, newPerDay: 1,
+  speed: 1.0, // 練習画面の速さボタン(番組音声・読み上げの速さにさらに掛ける)
   // 練習の流れ(型)。steps は順番どおりのステップと回数
   flows: [
     { id: 'full', name: 'じっくり(フルコース)', steps: [{ id: 'listen', n: 1 }, { id: 'read', n: 1 }, { id: 'overlap', n: 1 }, { id: 'shadow', n: 2 }, { id: 'repeat', n: 1 }, { id: 'jaen', n: 1 }] },
@@ -799,10 +818,11 @@ function render() {
   if (view.name !== 'lesson' && P.playing) stopStudy();
   if (view.name !== 'lesson') stopExtra();
   if (view.name !== 'assign') previewEl.pause();
+  if (!(view.name === 'lesson' && view.sheet)) stopSheetTimer(); // シートが閉じたら自動送りの見張りも外す
   if (view.name === 'lesson' && cur?.extras) loadExtraUrls(cur);
   if (view.name === 'lesson' && cur) prebuild(cur);
   $('#app').innerHTML = fn();
-  if (view.name === 'lesson') { updateStudyBar(); if (P.idx) markLine(P.idx, false); }
+  if (view.name === 'lesson') { updateStudyBar(); if (P.idx) markLine(P.idx, false); centerPill(); }
   if (view.name === 'records') { attachChart(); attachBars(); }
   if (view.name === 'flow') attachFlowDrag();
   if (view.name === 'segs') segLoop();
@@ -820,9 +840,18 @@ function vHome() {
   const sec = Stats.todaySec(), pct = Math.min(100, Math.round(sec / (S.goalMin * 60) * 100));
   const nextDue = Store.lessons.filter(l => l.srs && !isDue(l)).map(l => l.srs.due).sort()[0];
   const n = Store.lessons.length;
+  // いま終えたレッスン: 自動で「できた」になったものも、ここから「難しかった」に直せる(今日の分だけ・新しい順に5件)
+  const recent = P.recent.filter(r => new Date(r.at).toLocaleDateString('sv-SE') === today() && Store.get(r.id)).slice(0, 5);
+  const recentCard = recent.length ? `<section class="card recent">
+      <div class="today-h"><h2>いま終えたレッスン</h2><button class="mini" data-act="recentClear">閉じる</button></div>
+      ${recent.map(r => { const l = Store.get(r.id); return `<div class="rrow"><span class="tt"><b>${esc(l.title)}</b>
+        <small>${r.grade === 'done' ? `できた · 次の復習: ${l.srs ? fmtDue(l.srs.due) : '-'}` : '明日もう一度'}</small></span>
+        ${r.grade === 'done' ? `<button data-act="regrade" data-id="${esc(r.id)}">😣 難しかった</button>` : ''}</div>`; }).join('')}
+    </section>` : '';
   return bar('<button class="icon" data-act="records">記録</button>', 'Shadowing Coach',
     '<button class="icon plus" data-act="addMenu" aria-label="レッスンを追加">＋</button><button class="icon" data-act="settings">設定</button>') + `
   <main class="wrap">
+    ${recentCard}
     <section class="card today">
       <div class="today-h"><h2>今日やること</h2><button class="mini" data-act="records">🔥 ${Stats.streak()}日連続 · ${Math.floor(sec / 60)}/${S.goalMin}分 ›</button></div>
       <div class="goalbar"><i style="width:${pct}%"></i></div>
@@ -833,9 +862,24 @@ function vHome() {
           <span class="chev">▶</span></button>`).join('')
       : `<p class="empty">🎉 今日の分は完了です${nextDue ? `<br>次の復習は ${fmtDue(nextDue)}` : ''}${n ? '' : '<br><small>右上の「＋」から教材を取り込むと、ここに並びます</small>'}</p>`}
     </section>
+    <section class="card"><div class="today-h"><h2>C1 Climb</h2></div><p class="hint">${esc(climbLine())}</p><button class="block libbtn" data-act="climb">C1 Climb を開く<small>›</small></button></section>
     ${n ? `<button class="block libbtn" data-act="library">📚 すべてのレッスン<small>${n}件 ›</small></button>` : `<button class="primary block" data-act="addMenu">＋ レッスンを追加</button>`}
     ${Store.ok ? '' : '<p class="note">この端末に保存できません。プライベートブラウズを使っている場合は通常のタブで開いてください。</p>'}
   </main>`;
+}
+
+// C1 Climb(同じアプリの climb/)への入口。C1 Climb の localStorage を読むだけで、何も書かない
+function climbLine() {
+  try {
+    const rd = k => { try { const v = localStorage.getItem('c1climb:' + k); return v == null ? null : JSON.parse(v); } catch { return null; } };
+    const log = rd('log'), g = Number(rd('engage.goal')), goal = [5, 15, 30, 45].includes(g) ? g : 15;
+    if (!log || typeof log !== 'object' || !Object.keys(log).length) return '語彙・文法・書く・書き取りで、C1 をめざす練習。1日15分から始められます';
+    const day = log[today()];
+    let own = 0;
+    if (day && typeof day === 'object') for (const k of ['vocab', 'listening', 'speaking', 'writing', 'grammar', 'input']) own += Number(day[k]) || 0;
+    const total = Math.round(own + (Number(Stats.todaySec()) || 0) / 60);
+    return `語彙・文法・書く・書き取り。今日 ${total}分 / 目標 ${goal}分`;
+  } catch { return '語彙・文法・書く・書き取りで、C1 をめざす練習'; }
 }
 
 // 右上の「＋」: 追加の方法を選ぶ
@@ -1148,7 +1192,9 @@ function attachFlowDrag() {
 
 // ================================================================ 学習画面(ダイアログを見ながら、型の順番でステップが自動で進む)
 const SPEEDS = [0.7, 0.8, 0.9, 1.0, 1.1];
-const P = { token: 0, idx: 0, playing: false }; // 学習画面の再生状態
+const P = { token: 0, idx: 0, playing: false, recent: [] }; // 学習画面の再生状態。recent: このアプリを開いてから評価したレッスン(保存しない)
+// 保存してある速さ。SPEEDS にない値(古い版・手で書き換えたなど)なら 1.0 に戻す
+const savedSpeed = () => SPEEDS.find(v => typeof S.speed === 'number' && Math.abs(v - S.speed) < 1e-6) ?? 1.0;
 
 function stopStudy(keepMix) {
   stopExtra();
@@ -1159,13 +1205,29 @@ function stopStudy(keepMix) {
 }
 function updateStudyBar() {
   const b = $('#splay'); if (b) b.textContent = P.playing ? '⏸ 停止' : (view.step || P.idx ? '▶ 続きから' : '▶ 始める');
-  setStudyProg(0);
+  setStudyProg(0); updateStudyStat();
+}
+// 下のバーの「いまどこ」: ステップ名[ 回数] · ステップ k/全体 · 文 i/N(描き直さずに文字だけ替える)
+const studyStat = (plan, k, i, N) => { const p = plan[k]; return p ? `${stepDef(p.id).short}${p.of > 1 ? ` ${p.rep}/${p.of}` : ''} · ステップ ${k + 1}/${plan.length} · 文 ${Math.min(i, N - 1) + 1}/${N}` : ''; };
+function updateStudyStat() {
+  const el = $('#sstat'), L = el && Store.get(view.id);
+  if (!L) return;
+  const plan = studyPlan(L);
+  el.textContent = studyStat(plan, Math.min(view.step || 0, Math.max(0, plan.length - 1)), P.idx || 0, L.sentences.length);
+}
+// 今のステップの丸ボタンを横スクロールの中央へ(scrollIntoView はページが縦に動くので使わない)
+function centerPill() {
+  const box = $('.steppills'), cur = box?.querySelector('.pill.cur');
+  if (!cur) return;
+  const b = box.getBoundingClientRect(), c = cur.getBoundingClientRect();
+  box.scrollLeft += (c.left + c.width / 2) - (b.left + b.width / 2);
 }
 function setStudyProg(f) { const b = $('#sprog'); if (b) b.style.width = (Math.max(0, Math.min(1, f)) * 100).toFixed(1) + '%'; }
 function markLine(i, scroll = true) {
   document.querySelectorAll('.sline.cur').forEach(e => e.classList.remove('cur'));
   const el = document.querySelector(`.sline[data-i="${i}"]`);
   if (el) { el.classList.add('cur'); if (scroll) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  updateStudyStat();
 }
 function revealLine(i, k) {
   view.rev?.[k]?.add(i);
@@ -1252,28 +1314,54 @@ async function studyRun(fromStep = 0, fromLine = 0) {
     keepAwake(false);
   }
 }
-let sheetTimer = null, thinkTimer = null;
+let sheetTimer = null, thinkTimer = null, sheetLeft = 0, sheetStop = null;
+const SHEET_SEC = 6, SHEET_EV = ['pointerdown', 'touchstart', 'keydown'];
+const sheetCountText = () => sheetLeft > 0 ? `${sheetLeft}秒後に自動で進みます` : '自動送りを止めました';
+// 自動送りのタイマーと「触ったら止める」見張りを片付ける(シートが閉じたら必ず呼ぶ。render からも呼ぶので取り残しがない)
+function stopSheetTimer() {
+  clearInterval(sheetTimer); sheetTimer = null;
+  if (sheetStop) { SHEET_EV.forEach(t => document.removeEventListener(t, sheetStop, true)); sheetStop = null; }
+}
 function openSheet(finished) {
   const L = Store.get(view.id), nx = nextToday(L);
   if (nx) loadAudioUrl(nx).catch(() => {}); // 次のレッスンをすぐ始められるように
+  stopSheetTimer();
+  sheetLeft = finished ? SHEET_SEC : 0;
   Object.assign(view, { sheet: true, finished }); render();
-  clearInterval(sheetTimer);
   if (!finished) return;
-  let left = 3; // 最後まで終わったときは、3秒後に自動で次へ
+  // 最後まで終わったときは、6秒後に「できた」で自動で次へ(手を使わずに続けられる)。
+  // 画面に触れる・キーを押すと止める: 「難しかった」を押す前に勝手に進まないように
+  sheetStop = () => { stopSheetTimer(); sheetLeft = 0; const c = $('#scount'); if (c) c.textContent = sheetCountText(); };
+  SHEET_EV.forEach(t => document.addEventListener(t, sheetStop, { capture: true, passive: true }));
   sheetTimer = setInterval(() => {
-    if (view.name !== 'lesson' || !view.sheet) return clearInterval(sheetTimer);
-    if (--left > 0) { const c = $('#scount'); if (c) c.textContent = `${left}秒後に自動で進みます`; }
-    else { clearInterval(sheetTimer); ACTS.sheetNext(); }
+    if (view.name !== 'lesson' || !view.sheet) return stopSheetTimer();
+    if (--sheetLeft > 0) { const c = $('#scount'); if (c) c.textContent = sheetCountText(); }
+    else { stopSheetTimer(); sheetDone(true); }
   }, 1000);
 }
-// レッスンを「練習した」として記録し、次の復習日を決める
-function completeLesson(L, grade) {
+// レッスンを「練習した」として記録し、次の復習日を決める。auto: 評価ボタンを押さずに記録したとき(自動送り・続けて再生)
+// 直前の復習の状態を P.recent に控えておき、ホームの「いま終えたレッスン」から「難しかった」に付け直せるようにする
+function completeLesson(L, grade, auto = false) {
+  const prevSrs = L.srs ? structuredClone(L.srs) : null, at = Date.now();
   rateLesson(L, grade);
-  L.history = [...(L.history || []), { at: Date.now(), grade }];
+  L.history = [...(L.history || []), { at, grade }];
+  P.recent = [{ id: L.id, grade, auto, prevSrs, at }, ...P.recent.filter(r => r.id !== L.id)]; // 同じレッスンは新しい方だけ(古い控えで戻すと二重に巻き戻る)
   const hit = Stats.add(0, true);
   Store.save();
   return `${hit ? '🏆 今日の目標を達成！ ' : ''}次の復習: ${fmtDue(L.srs.due)}`;
 }
+// 「できた」で記録したレッスンを「難しかった」に付け直す。記録する直前の状態に戻してから評価し直すので、
+// 間隔が二重に進んだり、練習回数(Stats)が増えたりしない
+function regradeLesson(L, r) {
+  if (r.prevSrs) L.srs = structuredClone(r.prevSrs); else delete L.srs;
+  if (L.rates?.at(-1)?.g === r.grade) L.rates.pop(); // rateLesson が足した1件を外す
+  rateLesson(L, 'again');
+  const h = [...(L.history || [])], hi = h.findLastIndex(x => x.at === r.at);
+  h[hi >= 0 ? hi : Math.max(0, h.length - 1)] = { at: r.at, grade: 'again' };
+  L.history = h;
+  r.grade = 'again'; r.auto = false;
+}
+function sheetDone(auto) { stopSheetTimer(); const L = Store.get(view.id); goNext(L, completeLesson(L, 'done', auto)); }
 function goNext(L, msg) {
   const nx = nextToday(L);
   if (nx) { startLesson(nx); toast(`${msg}。次は「${nx.title}」`); }
@@ -1407,7 +1495,7 @@ function mixEventAt(m, t) { let e = null; for (const x of m.timeline) { if (x.t0
 // レッスンが切り替わったら、終わったレッスンを記録して、画面も次のレッスンへ
 function mixLessonChange(x, e) {
   if (!e || e.li <= x.li) return;
-  for (let li = x.li; li < e.li; li++) if (!x.done.has(li)) { x.done.add(li); completeLesson(Store.get(x.ids[li]), 'done'); }
+  for (let li = x.li; li < e.li; li++) if (!x.done.has(li)) { x.done.add(li); completeLesson(Store.get(x.ids[li]), 'done', true); }
   x.li = e.li; x.step = -1; x.line = -1;
   const L = Store.get(x.ids[e.li]);
   setMediaSession(L);
@@ -1465,7 +1553,7 @@ mixEl.addEventListener('ended', () => {
   if (x.ids.length === 1 && view.name === 'lesson' && view.id === last.id && document.visibilityState === 'visible') {
     view.step = 0; P.idx = 0; return openSheet(true); // 1レッスンだけのときは、いつもの終了画面
   }
-  for (let li = 0; li < x.ids.length; li++) if (!x.done.has(li)) completeLesson(Store.get(x.ids[li]), 'done');
+  for (let li = 0; li < x.ids.length; li++) if (!x.done.has(li)) completeLesson(Store.get(x.ids[li]), 'done', true);
   if (document.visibilityState !== 'visible') return;
   const nx = nextToday(last);
   if (nx) { startLesson(nx); toast(`次は「${nx.title}」`); }
@@ -1516,7 +1604,7 @@ function vLesson() {
     <button class="ghost danger" data-act="del">このレッスンを削除</button>
   </main>`;
   const plan = studyPlan(L), k = Math.min(view.step || 0, Math.max(0, plan.length - 1));
-  if (!view.show) Object.assign(view, { step: 0, show: showFor(plan[0]?.id || 'listen'), rev: { en: new Set(), ja: new Set() }, speed: view.speed ?? 1.0 });
+  if (!view.show) Object.assign(view, { step: 0, show: showFor(plan[0]?.id || 'listen'), rev: { en: new Set(), ja: new Set() }, speed: view.speed ?? savedSpeed() });
   const d = stepDef(plan[k]?.id || 'listen'), sh = view.show, rev = view.rev, noJa = !L.sentences.some(s => s.ja);
   const vis = (key, i) => sh[key] || rev[key].has(i);
   const txt = (key, i, t) => `<span class="${key} ${vis(key, i) ? '' : 'hid'}" ${vis(key, i) ? '' : `data-act="reveal" data-k="${key}" data-i="${i}"`}>${esc(t)}</span>`;
@@ -1530,14 +1618,14 @@ function vLesson() {
       : !hasAudio(L) ? `<div class="notice">🔈 番組音声がまだ付いていないため、読み上げ音声で流れます。<button data-act="segs">番組音声を付ける</button></div>`
       : nSeg < N ? `<div class="notice">${N - nSeg}文が区切れていないため、その文は読み上げ音声になります。<button data-act="segs">区切りを確認</button></div>` : ''}
     <div class="flowbar">
-      <div class="steppills">${plan.map((p, i) => `<button class="pill ${i === k ? 'cur' : ''}" data-act="stepGo" data-k="${i}">${stepDef(p.id).short}${p.of > 1 ? ` ${p.rep}/${p.of}` : ''}</button>`).join('')}</div>
+      <div class="steppills">${plan.map((p, i) => `<button class="pill ${i === k ? 'cur' : ''}" data-act="stepGo" data-k="${i}" ${i === k ? 'aria-current="step"' : ''}>${stepDef(p.id).short}${p.of > 1 ? ` ${p.rep}/${p.of}` : ''}</button>`).join('')}</div>
       <div class="flowmeta"><select data-flowsel="${flowKey(L)}" aria-label="使う型">${flowOptions(S[flowKey(L)])}</select>
         <button class="sm" data-act="flowEdit" data-id="${esc(flowOf(S[flowKey(L)]).id)}" aria-label="型を編集">✏️</button></div>
     </div>
-    <p class="hint"><b>${d.name}</b> — ${d.desc}${noJa ? '(このレッスンは訳がないため、日→英は省きます)' : ''}</p>
+    <p class="hint stepdesc"><b>${d.name}</b> — ${d.desc}${noJa ? '(このレッスンは訳がないため、日→英は省きます)' : ''}</p>
     <div class="chips">
-      <button class="chip ${sh.en ? 'on' : ''}" data-act="showEn">英文</button>
-      <button class="chip ${sh.ja ? 'on' : ''}" data-act="showJa" ${noJa ? 'disabled' : ''}>訳</button>
+      <button class="chip ${sh.en ? 'on' : ''}" data-act="showEn" aria-pressed="${!!sh.en}">英文</button>
+      <button class="chip ${sh.ja ? 'on' : ''}" data-act="showJa" aria-pressed="${!!sh.ja}" ${noJa ? 'disabled' : ''}>訳</button>
       <span class="hint">行をタップ: その文だけ再生</span>
     </div>
     ${d.jaen ? `<div class="thinkctl"><span class="hint">英文が出るまで</span><button class="sm" data-act="think" data-d="-1" aria-label="短く">−</button><b id="thinkv">${S.jaenFactor.toFixed(1)}倍</b><button class="sm" data-act="think" data-d="1" aria-label="長く">＋</button><span class="hint">(英文の長さ×)</span></div>` : ''}
@@ -1551,23 +1639,36 @@ function vLesson() {
   </main>
   <div class="sbar">
     <div class="sprog"><i id="sprog"></i></div>
+    <div class="sstat" id="sstat">${studyStat(plan, k, P.idx || 0, N)}</div>
+    <div class="spdrow" id="spdrow" ${view.spdOpen ? '' : 'hidden'}>${SPEEDS.map(v => `<button data-act="setSpeed" data-v="${v}" aria-pressed="${v === view.speed}">${v.toFixed(1)}×</button>`).join('')}</div>
     <div class="sbar-row">
-      <button data-act="speed" aria-label="速さ">${view.speed.toFixed(1)}×</button>
+      <button data-act="speed" id="spdbtn" aria-label="速さ" aria-expanded="${!!view.spdOpen}">${view.speed.toFixed(1)}×</button>
       <button data-act="prevLine" aria-label="前の文">⏮</button>
       <button class="primary splay" id="splay" data-act="studyPlay">▶ 始める</button>
       <button data-act="nextLine" aria-label="次の文">⏭</button>
-      <button data-act="finish" aria-label="完了">✓</button>
+      <button data-act="finish" aria-label="練習を終える">終了</button>
     </div>
   </div>
   ${view.sheet ? rateSheet(L) : ''}`;
 }
 function rateSheet(L) {
-  const nx = nextToday(L), days = INTERVALS[nextStage(L, 'done')];
+  const nx = nextToday(L), days = INTERVALS[nextStage(L, 'done')], dtxt = days === 1 ? '明日' : `${days}日後`;
+  const head = `🔥 ${Stats.streak()}日連続 · 今日 ${Math.floor(Stats.todaySec() / 60)}/${S.goalMin}分`;
+  // 途中で「終了」を押したとき: いちばん押しやすい所は「記録せずに終わる」(途中までを「できた」にしない)
+  if (!view.finished) return `<div class="sheet-bg" data-act="sheetClose"></div>
+  <div class="sheet" role="dialog" aria-label="練習を終える">
+    <h2>ここまでにしますか？</h2>
+    <p class="hint">${head}</p>
+    <button class="primary block big" data-act="sheetLeave">記録せずに終わる<small>復習の予定は変わりません</small></button>
+    <button class="block" data-act="sheetNext">✓ できた(次の復習は${dtxt})</button>
+    <button class="block" data-act="sheetHard">😣 難しかった(明日もう一度)</button>
+    <div class="row wrap2"><button class="ghost" data-act="again">↻ 最初からもう一度</button><button class="ghost" data-act="sheetClose">練習に戻る</button></div>
+  </div>`;
   return `<div class="sheet-bg" data-act="sheetClose"></div>
   <div class="sheet" role="dialog" aria-label="練習の終わり">
-    <h2>${view.finished ? '🎉 お疲れさまでした！' : 'ここまでにしますか？'}</h2>
-    <p class="hint">🔥 ${Stats.streak()}日連続 · 今日 ${Math.floor(Stats.todaySec() / 60)}/${S.goalMin}分 · 次の復習は${days === 1 ? '明日' : `${days}日後`}</p>
-    <button class="primary block big" data-act="sheetNext" id="snext">${nx ? `▶ 次へ: ${esc(nx.title)}` : 'ホームへ(今日の分はこれで最後)'}<small id="scount">${view.finished ? '3秒後に自動で進みます' : ''}</small></button>
+    <h2>🎉 お疲れさまでした！</h2>
+    <p class="hint">${head} · 次の復習は${dtxt}</p>
+    <button class="primary block big" data-act="sheetNext" id="snext">${nx ? `▶ 次へ: ${esc(nx.title)}` : 'ホームへ(今日の分はこれで最後)'}<small id="scount">${sheetCountText()}</small></button>
     <button class="block" data-act="sheetHard">😣 難しかった(明日もう一度)</button>
     <div class="row wrap2"><button class="ghost" data-act="again">↻ もう一度この流れで</button><button class="ghost" data-act="sheetClose">閉じる</button></div>
   </div>`;
@@ -1614,7 +1715,8 @@ function vSettings() {
       <label class="f">英語の声(1人目の話者)<select data-s="enVoice">${opt(isEn, S.enVoice)}</select></label>
       <label class="f">英語の声(2人目の話者)<select data-s="enVoice2">${opt(isEn, S.enVoice2)}</select></label>
       <label class="f">日本語の声<select data-s="jaVoice">${opt(isJa, S.jaVoice)}</select></label>
-      ${range('rate', '英語の速さ', 0.5, 1.4, 0.05, v => v.toFixed(2) + '×')}
+      ${range('rate', '読み上げ音声の速さ', 0.5, 1.4, 0.05, v => v.toFixed(2) + '×')}
+      <p class="hint">練習画面の速さボタンは、ここで決めた速さにさらに掛けます。</p>
       <button data-act="testVoice">試しに聞く</button>
       <p class="hint">Mac・iPhone は「設定 → アクセシビリティ → 読み上げコンテンツ → 声」で英語の「拡張」「プレミアム」音声をダウンロードすると、ぐっと自然な発音になります(追加後にこのページを再読み込み)。</p>
     </section>
@@ -1632,6 +1734,7 @@ function vSettings() {
     </section>
     <section class="card"><h2>トレーニング</h2>
       ${range('audioRate', '番組音声の速さ', 0.5, 1.5, 0.05, v => v.toFixed(2) + '×')}
+      <p class="hint">練習画面の速さボタンは、ここで決めた速さにさらに掛けます。</p>
       ${range('repeatFactor', 'リピーティングで話す時間(音声の長さ×)', 0.8, 3, 0.1, v => v.toFixed(1) + '倍')}
       ${range('jaenFactor', '日→英で考える時間(英文の長さ×)', 0.4, 4, 0.1, v => v.toFixed(1) + '倍')}
       ${chk('repeatShowEn', 'リピーティング中も英文を表示する')}
@@ -1740,9 +1843,11 @@ function vSegs() {
         <div class="srow-t"><span class="n">${i + 1}</span><span>${esc(s.en)}</span></div>
         <div class="srow-c">
           <button class="sm" data-act="segPlay" data-i="${i}" ${g ? '' : 'disabled'}>▶</button>
-          <span class="tm">${g ? `${fmtT(g.s)} – ${fmtT(g.e)}` : '未設定'}</span>
           <span class="lbl">始</span><button class="sm" data-act="nudge" data-i="${i}" data-k="s" data-d="-0.1" ${g ? '' : 'disabled'}>−</button><button class="sm" data-act="nudge" data-i="${i}" data-k="s" data-d="0.1" ${g ? '' : 'disabled'}>＋</button>
           <span class="lbl">終</span><button class="sm" data-act="nudge" data-i="${i}" data-k="e" data-d="-0.1" ${g ? '' : 'disabled'}>−</button><button class="sm" data-act="nudge" data-i="${i}" data-k="e" data-d="0.1" ${g ? '' : 'disabled'}>＋</button>
+        </div>
+        <div class="srow-c srow-c2">
+          <span class="tm">${g ? `${fmtT(g.s)} – ${fmtT(g.e)}` : '未設定'}</span>
           <button class="sm" data-act="segNow" data-i="${i}" data-k="s">始=今</button><button class="sm" data-act="segNow" data-i="${i}" data-k="e">終=今</button>
         </div></div>`; }).join('')}
     </section>
@@ -1935,6 +2040,12 @@ function segLoop() {
 function stopEditorAudio() { finishSpeech?.(false); audioEl.pause(); }
 
 // ================================================================ actions
+function showSpeedRow(on) {
+  view.spdOpen = on;
+  const row = $('#spdrow'), b = $('#spdbtn');
+  if (row) row.hidden = !on;
+  if (b) b.setAttribute('aria-expanded', String(on));
+}
 // レッスンを開いて、型の流れですぐ再生を始める(タップの中から呼ぶ。iOS の再生制限のため)
 function startLesson(L) {
   stopStudy(); P.idx = 0;
@@ -1950,6 +2061,7 @@ const ACTS = {
   open(el) { stopStudy(); P.idx = 0; view = { name: 'lesson', id: el.dataset.id, back: view.name === 'library' ? view : null }; render(); },
   lessonBack() { stopStudy(); view = view.back || { name: 'home' }; render(); },
   addMenu() { openAddSheet(); },
+  climb() { location.href = 'climb/index.html'; },
   library() { let m = 'list'; try { m = localStorage.getItem('sc.libMode') || 'list'; } catch {} view = { name: 'library', libMode: m }; render(); },
   libFilter(el) { view.filter = el.dataset.f; view.openMonths = null; render(); },
   libMode(el) { view.libMode = el.dataset.m; try { localStorage.setItem('sc.libMode', el.dataset.m); } catch {} render(); },
@@ -1987,10 +2099,20 @@ const ACTS = {
   finish() { stopStudy(); openSheet(false); },
   prevLine() { jumpLine(-1); },
   nextLine() { jumpLine(1); },
-  sheetClose() { clearInterval(sheetTimer); view.sheet = false; render(); },
-  again() { clearInterval(sheetTimer); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); runLesson(0, 0); },
-  sheetNext() { clearInterval(sheetTimer); const L = Store.get(view.id); goNext(L, completeLesson(L, 'done')); },
-  sheetHard() { clearInterval(sheetTimer); const L = Store.get(view.id); completeLesson(L, 'again'); goNext(L, '明日もう一度出します'); },
+  sheetClose() { stopSheetTimer(); view.sheet = false; render(); },
+  again() { stopSheetTimer(); const L = Store.get(view.id); view.sheet = false; P.idx = 0; prepareAudio(L); unlock(); runLesson(0, 0); },
+  sheetNext() { sheetDone(false); },
+  sheetHard() { stopSheetTimer(); const L = Store.get(view.id); completeLesson(L, 'again'); goNext(L, '明日もう一度出します'); },
+  // 途中でやめる: 評価を記録せず、開いた所へ戻る(ここまでの練習時間は記録済みのまま)
+  sheetLeave() { stopSheetTimer(); view.sheet = false; ACTS.lessonBack(); },
+  // ホームの「いま終えたレッスン」: 「できた」を「難しかった」に付け直す
+  regrade(el) {
+    const r = P.recent.find(x => x.id === el.dataset.id), L = r && Store.get(r.id);
+    if (!L || r.grade !== 'done') return;
+    regradeLesson(L, r);
+    Store.save(); render(); toast('明日もう一度出します');
+  },
+  recentClear() { P.recent = []; render(); },
   showEn() { view.show.en = !view.show.en; render(); },
   showJa() { view.show.ja = !view.show.ja; render(); },
   reveal(el) { revealLine(+el.dataset.i, el.dataset.k); },
@@ -2021,9 +2143,16 @@ const ACTS = {
       buildMix(sessionFor(L)).then(() => { if (P.mix && P.playing && view.id === id) runLesson(view.step || 0, P.idx || 0); }).catch(() => {});
     }, 700);
   },
-  speed(el) {
-    view.speed = SPEEDS[(SPEEDS.indexOf(view.speed) + 1) % SPEEDS.length]; el.textContent = view.speed.toFixed(1) + '×';
-    if (P.mix) mixEl.playbackRate = S.audioRate * view.speed;
+  // 速さ: ボタンで5つの候補を出し入れし、選んだらすぐ反映して保存。再生中に止めたり描き直したりしない
+  speed() { showSpeedRow(!view.spdOpen); },
+  setSpeed(el) {
+    const v = SPEEDS.find(x => x === +el.dataset.v);
+    if (v == null) return;
+    view.speed = S.speed = v; saveSettings();
+    if (P.mix) mixEl.playbackRate = S.audioRate * view.speed; // 読み上げ方式は次の文から view.speed を読む
+    const b = $('#spdbtn'); if (b) b.textContent = v.toFixed(1) + '×';
+    document.querySelectorAll('#spdrow button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.v === v)));
+    showSpeedRow(false);
   },
   // ---- 型の編集
   flowEdit(el) {
