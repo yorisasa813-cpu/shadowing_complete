@@ -279,11 +279,18 @@ input[type=search]{font-size:16px}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 124px);z-index:30;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;max-width:90vw;z-index:20}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 body:has(.spdrow:not([hidden])) #toast{bottom:calc(env(safe-area-inset-bottom) + 180px)} /* 速さの列を開いているときは、その上に出す */
+/* 今日の目標を達成したときの知らせ(上から出す。シートより手前・自分以外のタップは邪魔しない) */
+#goal{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);z-index:40;width:min(calc(100vw - 32px),440px);display:flex;flex-direction:column;gap:2px;background:var(--card);color:var(--ink);border:1px solid color-mix(in srgb,var(--ok) 50%,var(--line));border-left:5px solid var(--ok);border-radius:14px;padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,calc(-100% - 20px));transition:transform .3s ease-in,opacity .3s,visibility 0s .3s}
+#goal.on{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);transition:transform .3s ease-out,opacity .3s}
+#goal b{font-size:16px}
+#goal small{font-size:12px;color:var(--sub)}
+@media (prefers-reduced-motion:reduce){#goal,#goal.on{transform:translate(-50%,0)}#goal{transition:opacity .2s,visibility 0s .2s}#goal.on{transition:opacity .2s}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="toast" role="status"></div>
+<div id="goal" role="status"></div>
 <script>
 'use strict';
 const $ = (s, r = document) => r.querySelector(s);
@@ -301,7 +308,7 @@ function toast(msg) {
 const DEFAULTS = {
   rate: 0.95, audioRate: 1.0, enVoice: '', enVoice2: '', jaVoice: '',
   repeatFactor: 1.3, jaenFactor: 1.6, repeatShowEn: false, jaSpeak: true, announce: true, beep: true, bgPlay: true,
-  goalMin: 15, newPerDay: 1,
+  goalMin: 15, newPerDay: 1, goalNotify: true,
   speed: 1.0, // 練習画面の速さボタン(番組音声・読み上げの速さにさらに掛ける)
   // 練習の流れ(型)。steps は順番どおりのステップと回数
   flows: [
@@ -619,6 +626,13 @@ function speakOnce(text, voice, lang, rate) {
     speechSynthesis.speak(u);
   });
 }
+// 日→英の日本語訳の読み上げ。練習画面のスイッチで、読み上げ中の訳だけを止められるように終わらせ方を控えておく
+let jaFin = null;
+function sayJa(text) {
+  const p = speakOnce(text, jaVoice(), 'ja-JP', 1.05), f = finishSpeech;
+  jaFin = f;
+  return p.finally(() => { if (jaFin === f) jaFin = null; });
+}
 
 // ---------------------------------------------------------------- 番組音声(MP3 など)
 const audioEl = new Audio();
@@ -778,6 +792,36 @@ function beep() {
     o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.17);
   } catch {}
 }
+// 今日の目標を超えたときの知らせ(上の帯と小さな3音)。画面が消えている間に超えたら、戻ったときに帯だけ出す
+let goalPending = false, goalHideT = 0;
+function goalReached() {
+  if (!S.goalNotify) return;
+  if (document.visibilityState !== 'visible') { goalPending = true; return; }
+  showGoal(true);
+}
+function showGoal(chime) {
+  const g = $('#goal');
+  if (!g) return;
+  g.classList.add('on');
+  g.innerHTML = `<b>🏆 今日の目標 ${esc(S.goalMin)}分を達成しました</b><small>今日 ${Math.floor(Stats.todaySec() / 60)}分 · このまま続けても、ここで終えても大丈夫です</small>`;
+  clearTimeout(goalHideT); goalHideT = setTimeout(hideGoal, 6000);
+  if (chime && actx) try { // beep と同じくらいの小さな音で、上がっていく3音
+    const t = actx.currentTime;
+    [[660, 0], [880, 0.14], [1047, 0.28]].forEach(([f, dt]) => {
+      const o = actx.createOscillator(), g2 = actx.createGain(), t0 = t + dt;
+      o.frequency.value = f;
+      g2.gain.setValueAtTime(0.0001, t0); g2.gain.exponentialRampToValueAtTime(0.14, t0 + 0.02); g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+      o.connect(g2).connect(actx.destination); o.start(t0); o.stop(t0 + 0.34);
+    });
+  } catch {}
+}
+function hideGoal() { clearTimeout(goalHideT); $('#goal')?.classList.remove('on'); }
+document.addEventListener('click', e => { if (e.target.closest?.('#goal')) hideGoal(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !goalPending) return;
+  goalPending = false;
+  if (S.goalNotify) showGoal(false);
+});
 let wakeLock = null;
 async function keepAwake(on) {
   try { if (on) wakeLock = await navigator.wakeLock?.request('screen'); else { await wakeLock?.release(); wakeLock = null; } } catch {}
@@ -815,7 +859,7 @@ function render() {
   const fn = { home: vHome, lesson: vLesson, edit: vEdit, settings: vSettings, segs: vSegs, assign: vAssign, records: vRecords, flow: vFlow, library: vLibrary }[view.name] || vHome;
   const cur = view.id && Store.get(view.id);
   if (cur && hasAudio(cur) && !audioUrls.has(cur.id)) loadAudioUrl(cur).then(() => { if (cur.audio?.missing && view.id === cur.id) render(); });
-  if (view.name !== 'lesson' && P.playing) stopStudy();
+  if (view.name !== 'lesson' && (P.playing || P.solo)) stopStudy();
   if (view.name !== 'lesson') stopExtra();
   if (view.name !== 'assign') previewEl.pause();
   if (!(view.name === 'lesson' && view.sheet)) stopSheetTimer(); // シートが閉じたら自動送りの見張りも外す
@@ -1192,19 +1236,19 @@ function attachFlowDrag() {
 
 // ================================================================ 学習画面(ダイアログを見ながら、型の順番でステップが自動で進む)
 const SPEEDS = [0.7, 0.8, 0.9, 1.0, 1.1];
-const P = { token: 0, idx: 0, playing: false, recent: [] }; // 学習画面の再生状態。recent: このアプリを開いてから評価したレッスン(保存しない)
+const P = { token: 0, idx: 0, playing: false, solo: false, recent: [] }; // 学習画面の再生状態。solo: 行をタップした1文だけを再生中。recent: このアプリを開いてから評価したレッスン(保存しない)
 // 保存してある速さ。SPEEDS にない値(古い版・手で書き換えたなど)なら 1.0 に戻す
 const savedSpeed = () => SPEEDS.find(v => typeof S.speed === 'number' && Math.abs(v - S.speed) < 1e-6) ?? 1.0;
 
 function stopStudy(keepMix) {
   stopExtra();
   if (!keepMix) P.mix = null;
-  P.token++; P.playing = false;
+  P.token++; P.playing = false; P.solo = false;
   finishSpeech?.(false); speechSynthesis.cancel(); audioEl.pause(); mixEl.pause();
   updateStudyBar();
 }
 function updateStudyBar() {
-  const b = $('#splay'); if (b) b.textContent = P.playing ? '⏸ 停止' : (view.step || P.idx ? '▶ 続きから' : '▶ 始める');
+  const b = $('#splay'); if (b) b.textContent = P.playing || P.solo ? '⏸ 停止' : (view.step || P.idx ? '▶ 続きから' : '▶ 始める');
   setStudyProg(0); updateStudyStat();
 }
 // 下のバーの「いまどこ」: ステップ名[ 回数] · ステップ k/全体 · 文 i/N(描き直さずに文字だけ替える)
@@ -1235,15 +1279,18 @@ function revealLine(i, k) {
   if (el) { el.classList.remove('hid'); el.removeAttribute('data-act'); }
 }
 const lineRate = (L, s) => (segOf(L, s) ? S.audioRate : S.rate) * view.speed;
-const playLine = async (L, s) => {
+// alive: 止められたら、やり直しや読み上げでの代用をしない(止めた直後に鳴り出さないように)
+const playLine = async (L, s, alive = () => true) => {
   const seg = segOf(L, s);
   if (seg && await ensureAudio(L)) {
     const r = await playSeg(seg, lineRate(L, s));
-    if (r.ok || r.ms > 400) return r;
+    if (r.ok || r.ms > 400 || !alive()) return r;
     await sleep(150); // iPhone で直前の読み上げのあとに音声が止められた場合など
+    if (!alive()) return r;
     const r2 = await playSeg(seg, lineRate(L, s));
-    if (r2.ok || r2.ms > 400) return r2;
+    if (r2.ok || r2.ms > 400 || !alive()) return r2;
   }
+  if (!alive()) return { ok: false, ms: 0 };
   return speakOnce(s.en, voiceFor(L, s), 'en-US', S.rate * view.speed);
 };
 const estLine = (L, s) => { const seg = segOf(L, s); return seg ? (seg.e - seg.s) * 1000 / lineRate(L, s) : s.en.split(/\s+/).length * 400 / lineRate(L, s) + 300; };
@@ -1273,10 +1320,15 @@ async function studyRun(fromStep = 0, fromLine = 0) {
     setStudyProg(0);
   };
   let mark = Date.now(), cur = null; // 練習時間をステップごとに記録する
-  const flush = () => {
-    if (cur) { const sec = (Date.now() - mark) / 1000; if (Stats.add(sec, false, { lesson: L.id, modes: { [cur]: sec } })) toast('🏆 今日の目標を達成しました！'); }
-    mark = Date.now();
+  // 途中(10秒ごと・ステップの区切り)は1秒単位で入れて端数は次へ持ち越す(何度呼んでも秒を落とさない・二重に数えない)。最後だけ端数を丸めて入れる
+  const flush = (last = false) => {
+    const now = Date.now();
+    if (!cur) { mark = now; return; }
+    const sec = last ? Math.round((now - mark) / 1000) : Math.floor((now - mark) / 1000);
+    if (last) mark = now; else mark += sec * 1000;
+    if (sec >= 1 && Stats.add(sec, false, { lesson: L.id, modes: { [cur]: sec } })) goalReached();
   };
+  const flushTimer = setInterval(() => { if (alive()) flush(); }, 10000); // 目標の達成をすぐ知らせるため
   P.playing = true; keepAwake(true);
   try {
     for (let k = fromStep; k < plan.length; k++) {
@@ -1293,23 +1345,24 @@ async function studyRun(fromStep = 0, fromLine = 0) {
         P.idx = i; markLine(i);
         if (d.jaen) {
           revealLine(i, 'ja');
-          if (S.jaSpeak) { await speakOnce(s.ja, jaVoice(), 'ja-JP', 1.05); if (!alive()) throw 0; }
+          if (S.jaSpeak) { await sayJa(s.ja); if (!alive()) throw 0; }
           beep();
           await pause(estLine(L, s) * S.jaenFactor + 1500, true); // 考える時間
           revealLine(i, 'en');
         }
-        const r = await playLine(L, s);
+        const r = await playLine(L, s, alive);
         if (!alive()) throw 0;
         if (d.repeat) { beep(); await pause(r.ms * S.repeatFactor + 600, true); } // 言う時間
         else await pause(d.jaen ? 1200 : d.gap);
       }
       fromLine = 0;
     }
-    flush(); cur = null;
+    flush(true); cur = null;
     P.idx = 0; P.playing = false; view.step = 0;
     openSheet(true); // 最後まで終わったら、すぐ評価
   } catch {} finally {
-    flush();
+    clearInterval(flushTimer);
+    flush(true);
     if (alive()) { P.playing = false; updateStudyBar(); }
     keepAwake(false);
   }
@@ -1484,7 +1537,8 @@ async function mixPlay(L, fromStep, fromLine) {
   const e0 = m.timeline.find(e => e.li === 0 && e.k === fromStep && (e.kind === 'step' ? fromLine === 0 : e.i >= fromLine));
   if (mixEl.dataset.u !== m.url) { mixEl.src = m.url; mixEl.dataset.u = m.url; }
   mixEl.playbackRate = S.audioRate * view.speed;
-  P.mix = { ids: m.ids, m, li: 0, lastCT: e0?.t0 || 0, step: -1, line: -1, done: new Set() };
+  // said: 訳を読み上げた文 / sayN: 何回目の読み上げか(古い読み上げの続きを無視する) / hold: 訳の読み上げのために自分で止めている
+  P.mix = { ids: m.ids, m, li: 0, lastCT: e0?.t0 || 0, step: -1, line: -1, done: new Set(), said: null, sayN: 0, hold: false };
   mixPrimeTok++; mixEl.muted = false; // 準備の再生(unlock)があとから止めたり消音したりしないように
   try { mixEl.currentTime = e0?.t0 || 0; await mixEl.play(); }
   catch { P.playing = false; P.mix = null; updateStudyBar(); return toast('再生を始められませんでした。もう一度 ▶ を押してください'); }
@@ -1513,11 +1567,17 @@ function syncMixUI() { // 画面に、今流れている所を映す
     if (x.line !== e.i) { x.line = e.i; P.idx = e.i; markLine(e.i); } // ステップの最初の行もハイライトする
     if (e.kind === 'think') revealLine(e.i, 'ja');
     // 日→英: 画面がついているときは、考える時間に入ったら一時停止して日本語訳を読み上げ、終わったら続きを流す
+    // (一時停止中に ⏮⏭ や行のタップで位置だけ動かしたときは読み上げない。▶ で流れ出したら読む)
     const said = `${e.li}:${e.k}:${e.i}`;
-    if (e.kind === 'think' && !e.jaAudio && S.jaSpeak && x.said !== said && L.sentences[e.i]?.ja) {
+    if (e.kind === 'think' && !e.jaAudio && S.jaSpeak && P.playing && x.said !== said && L.sentences[e.i]?.ja) {
       x.said = said;
-      mixEl.pause();
-      speakOnce(L.sentences[e.i].ja, jaVoice(), 'ja-JP', 1.05).then(() => { if (P.mix === x && P.playing) mixEl.play().catch(() => {}); });
+      const n = ++x.sayN;
+      x.hold = true; mixEl.pause();
+      sayJa(L.sentences[e.i].ja).then(() => {
+        if (x.sayN !== n) return; // 移動したあとに終わった古い読み上げ
+        x.hold = false;
+        if (P.mix === x && P.playing) mixEl.play().catch(() => {});
+      });
     }
     if (e.kind === 'play' && stepDef(plan[e.k]?.id).jaen) revealLine(e.i, 'en');
   }
@@ -1529,8 +1589,11 @@ mixEl.addEventListener('timeupdate', () => {
   const ct = mixEl.currentTime, d = ct - x.lastCT;
   x.lastCT = ct;
   if (d > 0 && d < 3600) { // 練習時間を記録(消灯中の分も、戻ったときにまとめて入る)
-    const e = mixEventAt(x.m, ct), L = Store.get(x.ids[e?.li ?? 0]), id = studyPlan(L)[e?.k ?? 0]?.id || 'listen', sec = d / (mixEl.playbackRate || 1);
-    if (Stats.add(sec, false, { lesson: L.id, modes: { [id]: sec } })) toast('🏆 今日の目標を達成しました！');
+    // timeupdate は 0.25秒ほどごとに来るので、Stats.add の丸めで消えないよう1秒たまるごとに入れる
+    const e = mixEventAt(x.m, ct), L = Store.get(x.ids[e?.li ?? 0]), id = studyPlan(L)[e?.k ?? 0]?.id || 'listen';
+    x.acc = (x.acc || 0) + d / (mixEl.playbackRate || 1);
+    const sec = Math.floor(x.acc);
+    if (sec >= 1) { x.acc -= sec; if (Stats.add(sec, false, { lesson: L.id, modes: { [id]: sec } })) goalReached(); }
   }
   syncMixUI();
 });
@@ -1559,7 +1622,25 @@ mixEl.addEventListener('ended', () => {
   if (nx) { startLesson(nx); toast(`次は「${nx.title}」`); }
   else { P.idx = 0; view = { name: 'home' }; render(); toast('🎉 今日の分は完了！'); }
 });
-// 前の文・次の文へ(1本の音声のときは、その位置へ移動する)
+// ロック画面・イヤホン・コントロールセンター・電話などで止まった/動いたときも ▶/⏸ を合わせる。
+// イベントは遅れて届くので、届いた時点の音声の状態を見る(自分で止めた・訳の読み上げで止めている・準備の再生は数えない)
+mixEl.addEventListener('pause', () => {
+  const x = P.mix;
+  if (x && P.playing && mixEl.paused && !mixEl.ended && !x.hold) { P.playing = false; updateStudyBar(); }
+});
+mixEl.addEventListener('play', () => {
+  if (P.mix && !P.playing && !mixEl.paused) { P.playing = true; updateStudyBar(); }
+});
+// 1本の音声の中で位置 t へ移動する。読み上げ中の訳は止め、移動先の画面と訳の読み上げが付いてくるようにする。再生中なら流し続ける
+function mixSeek(x, t) {
+  x.sayN++; x.hold = false;
+  if (jaFin) { jaFin(false); speechSynthesis.cancel(); }
+  t += 0.001; // ちょうどの時刻だと読み戻しの誤差で「前の文」と判定され、ハイライトが一瞬前の行に飛ぶ
+  mixEl.currentTime = t; x.lastCT = t; x.line = -1; x.said = null; // 飛ばした分は練習時間に入れない
+  syncMixUI();
+  if (P.playing && !x.hold && mixEl.paused) mixEl.play().catch(() => {});
+}
+// 前の文・次の文へ(1本の音声のときは、その位置へ移動する)。止まっているときは位置だけ動かす
 function jumpLine(dir) {
   const x = P.mix;
   if (x) {
@@ -1567,15 +1648,30 @@ function jumpLine(dir) {
     let n = u.findLastIndex(e => e.t0 <= t + 0.01);
     if (dir < 0) n = n >= 0 && t - u[n].t0 > 1.2 ? n : n - 1; else n += 1;
     n = Math.max(0, Math.min(u.length - 1, n));
-    mixEl.currentTime = u[n].t0; x.line = -1;
-    return syncMixUI();
+    return mixSeek(x, u[n].t0);
   }
   const L = Store.get(view.id), plan = studyPlan(L), N = L.sentences.length;
   let k = view.step || 0, i = (P.idx || 0) + dir;
   if (i >= N && k < plan.length - 1) { k++; i = 0; }
   if (i < 0) i = 0;
-  stopStudy(); prepareAudio(L); unlock();
-  if (i < N) runLesson(k, i);
+  const playing = P.playing;
+  stopStudy();
+  if (playing) { prepareAudio(L); unlock(); if (i < N) runLesson(k, i); return; }
+  if (i >= N) return;
+  if (k !== (view.step || 0)) setStep(k, plan); // 次のステップへ(音は出さない)
+  P.idx = i; markLine(i, false); updateStudyBar();
+}
+// タップした文を今の位置にする(音楽プレーヤーの位置移動と同じ): 再生中ならそこから流し続け、止まっていれば位置だけ動かす
+function seekLine(i) {
+  const L = Store.get(view.id), x = P.mix, k = view.step || 0;
+  if (!L) return;
+  if (x && x.ids[x.li] === view.id) {
+    const u = x.m.units.find(e => e.li === x.li && e.k === k && e.i >= i); // 日→英は訳のない文を飛ばすので、その次の文へ
+    if (u) mixSeek(x, u.t0);
+    return;
+  }
+  if (P.playing) { stopStudy(); prepareAudio(L); unlock(); return runLesson(k, i); }
+  stopStudy(); P.idx = i; markLine(i, false); updateStudyBar();
 }
 // ロック画面の操作(再生・一時停止・前後の文)
 function setMediaSession(L) {
@@ -1626,7 +1722,8 @@ function vLesson() {
     <div class="chips">
       <button class="chip ${sh.en ? 'on' : ''}" data-act="showEn" aria-pressed="${!!sh.en}">英文</button>
       <button class="chip ${sh.ja ? 'on' : ''}" data-act="showJa" aria-pressed="${!!sh.ja}" ${noJa ? 'disabled' : ''}>訳</button>
-      <span class="hint">行をタップ: その文だけ再生</span>
+      ${d.jaen ? `<button class="chip ${S.jaSpeak ? 'on' : ''}" data-act="jaSpeak" aria-pressed="${!!S.jaSpeak}">訳の読み上げ</button>` : ''}
+      <span class="hint">行をタップ: その文へ移動して再生</span>
     </div>
     ${d.jaen ? `<div class="thinkctl"><span class="hint">英文が出るまで</span><button class="sm" data-act="think" data-d="-1" aria-label="短く">−</button><b id="thinkv">${S.jaenFactor.toFixed(1)}倍</b><button class="sm" data-act="think" data-d="1" aria-label="長く">＋</button><span class="hint">(英文の長さ×)</span></div>` : ''}
     <div class="slines">${L.sentences.map((s, i) => `<button class="sline" data-act="line" data-i="${i}">
@@ -1729,6 +1826,7 @@ function vSettings() {
     </section>
     <section class="card"><h2>続ける・復習</h2>
       <label class="f inline">1日の目標(分)<input type="number" inputmode="numeric" min="1" max="120" data-sn="goalMin" value="${S.goalMin}"></label>
+      ${chk('goalNotify', '目標を達成したら知らせる(表示と音)')}
       <label class="f inline">1日の新しいレッスン数<input type="number" inputmode="numeric" min="0" max="5" data-sn="newPerDay" value="${S.newPerDay}"></label>
       <p class="hint">練習を終えるたびに、次の復習までの間隔が 1 → 3 → 7 → 14 → 30 → 60 → 120日 と広がります。終わったときに「😣 難しかった」を押すと、明日からやり直しになります。</p>
     </section>
@@ -2046,6 +2144,18 @@ function showSpeedRow(on) {
   if (row) row.hidden = !on;
   if (b) b.setAttribute('aria-expanded', String(on));
 }
+// 1本の音声の中身が変わる設定(考える時間・訳の読み上げ)を変えたとき: 再生中は少し待って作り直し、今の文から続ける。
+// 止めているときは古い音声を捨てるだけ(次の ▶ で今のステップ・文から作り直す)
+function remixSoon() {
+  clearTimeout(thinkTimer);
+  if (P.mix && !P.playing) { P.mix = null; return; }
+  thinkTimer = setTimeout(() => {
+    const L = Store.get(view.id);
+    if (!P.mix || !P.playing || !L) return; // 読み上げ方式のときは次の文から自動で反映される
+    const id = L.id;
+    buildMix(sessionFor(L)).then(m => { if (P.mix && P.playing && view.id === id && P.mix.m !== m) runLesson(view.step || 0, P.idx || 0); }).catch(() => {});
+  }, 700);
+}
 // レッスンを開いて、型の流れですぐ再生を始める(タップの中から呼ぶ。iOS の再生制限のため)
 function startLesson(L) {
   stopStudy(); P.idx = 0;
@@ -2115,17 +2225,34 @@ const ACTS = {
   recentClear() { P.recent = []; render(); },
   showEn() { view.show.en = !view.show.en; render(); },
   showJa() { view.show.ja = !view.show.ja; render(); },
-  reveal(el) { revealLine(+el.dataset.i, el.dataset.k); },
+  // ぼかしを外した文を今の位置にする(今の文をのぞいただけなら、やり直さない)
+  reveal(el) {
+    const i = +el.dataset.i;
+    if (i !== (P.idx || 0)) seekLine(i);
+    revealLine(i, el.dataset.k); // 移動のあとで外す(読み上げ方式で先頭の文へ移ると画面を描き直すため)
+  },
+  // 再生中: その文へ移動して流し続ける(日→英の答えが先に見えないよう、英文はここでは出さない)
+  // 止まっているとき: その文だけ再生して英文を出す。▶/⏸ に反映し、鳴り終わったら戻す
   line(el) {
     const L = Store.get(view.id), i = +el.dataset.i;
+    if (P.playing) return seekLine(i);
     stopStudy(); prepareAudio(L); unlock();
-    P.idx = i; markLine(i, false); updateStudyBar();
+    P.idx = i; markLine(i, false);
     revealLine(i, 'en');
-    setTimeout(() => playLine(L, L.sentences[i]), 50);
+    const tok = P.token, alive = () => P.token === tok;
+    P.solo = true; updateStudyBar();
+    setTimeout(() => {
+      if (!alive()) return;
+      playLine(L, L.sentences[i], alive).then(() => { if (alive() && P.solo) { P.solo = false; updateStudyBar(); } });
+    }, 50);
   },
   studyPlay() {
-    if (P.playing) return stopStudy(true); // 一時停止(1本の音声は位置を覚えておく)
-    if (P.mix && P.mix.ids[P.mix.li] === view.id && mixEl.src) { unlock(); P.playing = true; mixEl.play().then(updateStudyBar).catch(() => {}); return; }
+    if (P.playing || P.solo) return stopStudy(true); // 一時停止(1本の音声は位置を覚えておく)。1文だけの再生も止める
+    if (P.mix && P.mix.ids[P.mix.li] === view.id && mixEl.src) {
+      unlock(); P.playing = true; updateStudyBar();
+      mixEl.play().catch(() => { if (P.mix && P.playing && mixEl.paused && !P.mix.hold) { P.playing = false; updateStudyBar(); } }); // 鳴らせなかったら ▶ に戻す
+      return;
+    }
     const L = Store.get(view.id);
     prepareAudio(L); unlock();
     runLesson(view.step || 0, P.idx || 0);
@@ -2135,13 +2262,15 @@ const ACTS = {
     S.jaenFactor = Math.max(0.4, Math.min(4, Math.round((S.jaenFactor + 0.2 * +el.dataset.d) * 10) / 10));
     saveSettings();
     const v = $('#thinkv'); if (v) v.textContent = S.jaenFactor.toFixed(1) + '倍';
-    clearTimeout(thinkTimer);
-    thinkTimer = setTimeout(() => {
-      const L = Store.get(view.id);
-      if (!P.mix || !P.playing || !L) return; // 読み上げ方式のときは次の文から自動で反映される
-      const id = L.id;
-      buildMix(sessionFor(L)).then(() => { if (P.mix && P.playing && view.id === id) runLesson(view.step || 0, P.idx || 0); }).catch(() => {});
-    }, 700);
+    remixSoon();
+  },
+  // 日→英の日本語訳の読み上げをその場で切り替える(描き直すと今の行のハイライトが消えるので、ボタンだけ替える)
+  jaSpeak(el) {
+    S.jaSpeak = !S.jaSpeak; saveSettings();
+    el.classList.toggle('on', S.jaSpeak); el.setAttribute('aria-pressed', String(S.jaSpeak));
+    toast(`日本語訳の読み上げ: ${S.jaSpeak ? 'オン' : 'オフ'}`);
+    if (!S.jaSpeak && jaFin) { jaFin(true); speechSynthesis.cancel(); } // 読み上げ中の訳だけ止めて、考える時間へ進める(流れは止めない)
+    remixSoon();
   },
   // 速さ: ボタンで5つの候補を出し入れし、選んだらすぐ反映して保存。再生中に止めたり描き直したりしない
   speed() { showSpeedRow(!view.spdOpen); },
